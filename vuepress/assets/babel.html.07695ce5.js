@@ -1,1 +1,0 @@
-const e={key:"v-3088bdde",path:"/zh/tool/babel.html",title:"\u4E00\u3001Babel\u662F\u4EC0\u4E48",lang:"zh-CN",frontmatter:{},excerpt:"",headers:[],git:{updatedTime:1729161512e3,contributors:[{name:"loren.lou",email:"loren.luo@jiuzhang.net",commits:1}]},filePathRelative:"zh/tool/babel.md"};export{e as data};

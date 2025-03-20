@@ -1,1 +1,0 @@
-const e={key:"v-43fb296d",path:"/zh/extjs/",title:"extjs",lang:"zh-CN",frontmatter:{},excerpt:"",headers:[{level:3,title:"\u5206\u9875",slug:"\u5206\u9875",children:[]}],git:{updatedTime:1668588664e3,contributors:[{name:"721693454@qq.com",email:"abcde199114710",commits:1}]},filePathRelative:"zh/extjs/README.md"};export{e as data};

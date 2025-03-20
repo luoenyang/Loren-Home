@@ -1,1 +1,0 @@
-const t={key:"v-56af2bf0",path:"/zh/js-css-h5/js/10-%E7%BA%BF%E7%A8%8B%E9%98%BB%E5%A1%9E.html",title:"\u7EBF\u7A0B\u548C\u8FDB\u7A0B",lang:"zh-CN",frontmatter:{},excerpt:"",headers:[],git:{updatedTime:1650442828e3,contributors:[{name:"loren.lou",email:"loren.luo@jiuzhang.net",commits:2}]},filePathRelative:"zh/js-css-h5/js/10-\u7EBF\u7A0B\u963B\u585E.md"};export{t as data};

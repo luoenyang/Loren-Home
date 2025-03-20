@@ -1,1 +1,0 @@
-const e={key:"v-adb7c5dc",path:"/zh/vue%E7%94%9F%E6%80%81/pinia/%E4%BB%80%E4%B9%88%E6%98%AFpinia.html",title:"\u4EC0\u4E48\u662Fpinia",lang:"zh-CN",frontmatter:{},excerpt:"",headers:[],git:{updatedTime:1654505939e3,contributors:[{name:"loren.lou",email:"loren.luo@jiuzhang.net",commits:1}]},filePathRelative:"zh/vue\u751F\u6001/pinia/\u4EC0\u4E48\u662Fpinia.md"};export{e as data};

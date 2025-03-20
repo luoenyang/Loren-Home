@@ -1,1 +1,0 @@
-const e={key:"v-711067c2",path:"/zh/js-css-h5/css/8-flex%E5%B8%83%E5%B1%80.html",title:"flex\u5E03\u5C40",lang:"zh-CN",frontmatter:{},excerpt:"",headers:[],git:{updatedTime:1733339812e3,contributors:[{name:"loren.lou",email:"loren.luo@jiuzhang.net",commits:2}]},filePathRelative:"zh/js-css-h5/css/8-flex\u5E03\u5C40.md"};export{e as data};

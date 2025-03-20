@@ -1,1 +1,0 @@
-const e={key:"v-373a4017",path:"/zh/vue%E7%94%9F%E6%80%81/vue/27-render%E5%87%BD%E6%95%B0.html",title:"render\u51FD\u6570",lang:"zh-CN",frontmatter:{},excerpt:"",headers:[],git:{updatedTime:1729678107e3,contributors:[{name:"loren.lou",email:"loren.luo@jiuzhang.net",commits:1}]},filePathRelative:"zh/vue\u751F\u6001/vue/27-render\u51FD\u6570.md"};export{e as data};

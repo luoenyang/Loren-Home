@@ -1,1 +1,0 @@
-const e={key:"v-ba473ff6",path:"/zh/vue%E7%94%9F%E6%80%81/vue/28-jsx.html",title:"jsx",lang:"zh-CN",frontmatter:{},excerpt:"",headers:[{level:3,title:"\u7EFC\u5408jsx",slug:"\u7EFC\u5408jsx",children:[]}],git:{updatedTime:1729678107e3,contributors:[{name:"loren.lou",email:"loren.luo@jiuzhang.net",commits:1}]},filePathRelative:"zh/vue\u751F\u6001/vue/28-jsx.md"};export{e as data};
