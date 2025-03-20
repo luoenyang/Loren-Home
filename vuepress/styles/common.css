@@ -1,0 +1,4 @@
+/*覆盖原有默认内容区宽度*/
+.page .theme-default-content:not(.custom){
+   max-width:80% !important;
+}

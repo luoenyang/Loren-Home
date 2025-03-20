@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="generator" content="VuePress 2.0.0-beta.37">
+    <style>
+      :root {
+        --c-bg: #fff;
+      }
+      html.dark {
+        --c-bg: #22272e;
+      }
+      html, body {
+        background-color: var(--c-bg);
+      }
+    </style>
+    <script>
+      const userMode = localStorage.getItem('vuepress-color-scheme');
+			const systemDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+			if (userMode === 'dark' || (userMode !== 'light' && systemDarkMode)) {
+				document.documentElement.classList.toggle('dark', true);
+			}
+    </script>
+    <link rel="icon" type="image/x-icon" href="/Loren-Home/vuepress/img/logo.ico"><link rel="stylesheet" type="text/css" href="/Loren-Home/vuepress/styles/common.css"><title>nginx基本使用 | LOREN 的技术随笔</title><meta name="description" content="LOREN 的技术随笔">
+    <link rel="modulepreload" href="/Loren-Home/vuepress/assets/app.5c80a7c1.js"><link rel="modulepreload" href="/Loren-Home/vuepress/assets/nginx基本使用.html.dda29302.js"><link rel="modulepreload" href="/Loren-Home/vuepress/assets/nginx基本使用.html.c6088231.js">
+    <link rel="stylesheet" href="/Loren-Home/vuepress/assets/style.09d8922c.css">
+  </head>
+  <body>
+    <div id="app"><!--[--><div class="theme-container"><!--[--><header class="navbar"><div class="toggle-sidebar-button" title="toggle sidebar" aria-expanded="false" role="button" tabindex="0"><div class="icon" aria-hidden="true"><span></span><span></span><span></span></div></div><span><a href="/Loren-Home/vuepress/" class=""><img class="logo" src="/Loren-Home/vuepress/img/loren.jpg" alt="LOREN 的技术随笔"><span class="site-name can-hide">LOREN 的技术随笔</span></a></span><div class="navbar-items-wrapper" style=""><!--[--><!--]--><nav class="navbar-items can-hide"><!--[--><div class="navbar-item"><a href="/Loren-Home/vuepress/zh/" class="" aria-label="Home"><!--[--><!--]--> Home <!--[--><!--]--></a></div><div class="navbar-item"><a href="/Loren-Home/vuepress/zh/vue生态/" class="" aria-label="Vue生态"><!--[--><!--]--> Vue生态 <!--[--><!--]--></a></div><div class="navbar-item"><a class="external-link" href="https://lorencloudmini-0vqic-1304058156.tcloudbaseapp.com/" rel="noopener noreferrer" target="_blank" aria-label="我的主页"><!--[--><!--]--> 我的主页 <span><svg class="external-link-icon" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path><polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg><span class="external-link-icon-sr-only">open in new window</span></span><!--[--><!--]--></a></div><!--]--></nav><!--[--><!--]--><button class="toggle-dark-button" title="toggle dark mode"><svg style="" class="icon" focusable="false" viewBox="0 0 32 32"><path d="M16 12.005a4 4 0 1 1-4 4a4.005 4.005 0 0 1 4-4m0-2a6 6 0 1 0 6 6a6 6 0 0 0-6-6z" fill="currentColor"></path><path d="M5.394 6.813l1.414-1.415l3.506 3.506L8.9 10.318z" fill="currentColor"></path><path d="M2 15.005h5v2H2z" fill="currentColor"></path><path d="M5.394 25.197L8.9 21.691l1.414 1.415l-3.506 3.505z" fill="currentColor"></path><path d="M15 25.005h2v5h-2z" fill="currentColor"></path><path d="M21.687 23.106l1.414-1.415l3.506 3.506l-1.414 1.414z" fill="currentColor"></path><path d="M25 15.005h5v2h-5z" fill="currentColor"></path><path d="M21.687 8.904l3.506-3.506l1.414 1.415l-3.506 3.505z" fill="currentColor"></path><path d="M15 2.005h2v5h-2z" fill="currentColor"></path></svg><svg style="display:none;" class="icon" focusable="false" viewBox="0 0 32 32"><path d="M13.502 5.414a15.075 15.075 0 0 0 11.594 18.194a11.113 11.113 0 0 1-7.975 3.39c-.138 0-.278.005-.418 0a11.094 11.094 0 0 1-3.2-21.584M14.98 3a1.002 1.002 0 0 0-.175.016a13.096 13.096 0 0 0 1.825 25.981c.164.006.328 0 .49 0a13.072 13.072 0 0 0 10.703-5.555a1.01 1.01 0 0 0-.783-1.565A13.08 13.08 0 0 1 15.89 4.38A1.015 1.015 0 0 0 14.98 3z" fill="currentColor"></path></svg></button><form class="search-box" role="search"><input type="search" placeholder="搜索" autocomplete="off" spellcheck="false" value><!----></form></div></header><!--]--><div class="sidebar-mask"></div><!--[--><aside class="sidebar"><nav class="navbar-items"><!--[--><div class="navbar-item"><a href="/Loren-Home/vuepress/zh/" class="" aria-label="Home"><!--[--><!--]--> Home <!--[--><!--]--></a></div><div class="navbar-item"><a href="/Loren-Home/vuepress/zh/vue生态/" class="" aria-label="Vue生态"><!--[--><!--]--> Vue生态 <!--[--><!--]--></a></div><div class="navbar-item"><a class="external-link" href="https://lorencloudmini-0vqic-1304058156.tcloudbaseapp.com/" rel="noopener noreferrer" target="_blank" aria-label="我的主页"><!--[--><!--]--> 我的主页 <span><svg class="external-link-icon" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path><polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg><span class="external-link-icon-sr-only">open in new window</span></span><!--[--><!--]--></a></div><!--]--></nav><!--[--><!--]--><ul class="sidebar-items"><!--[--><li><a href="/Loren-Home/vuepress/zh/helloVuepress.md" class="sidebar-item sidebar-heading" aria-label="helloVuepress"><!--[--><!--]--> helloVuepress <!--[--><!--]--></a><!----></li><li><p tabindex="0" class="sidebar-item sidebar-heading collapsible">vue生态 <span class="right arrow"></span></p><ul style="display:none;" class="sidebar-item-children"><!--[--><li><a href="/Loren-Home/vuepress/zh/vue生态/vue/" class="sidebar-item" aria-label="vue"><!--[--><!--]--> vue <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/vue生态/vite/" class="sidebar-item" aria-label="vite"><!--[--><!--]--> vite <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/vue生态/vue3/" class="sidebar-item" aria-label="vue3"><!--[--><!--]--> vue3 <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/vue生态/vuex/" class="sidebar-item" aria-label="vuex"><!--[--><!--]--> vuex <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/vue生态/pinia/" class="sidebar-item" aria-label="pinia"><!--[--><!--]--> pinia <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/vue生态/vueRouter/" class="sidebar-item" aria-label="vueRouter"><!--[--><!--]--> vueRouter <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/vue生态/nuxt/" class="sidebar-item" aria-label="nuxt"><!--[--><!--]--> nuxt <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/vue生态/elementui/" class="sidebar-item" aria-label="elementui"><!--[--><!--]--> elementui <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/vue生态/ui组件库.md" class="sidebar-item" aria-label="ui组件库"><!--[--><!--]--> ui组件库 <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/vue生态/vscode插件.md" class="sidebar-item" aria-label="vscode插件"><!--[--><!--]--> vscode插件 <!--[--><!--]--></a><!----></li><!--]--></ul></li><li><a href="/Loren-Home/vuepress/zh/uniapp/" class="sidebar-item sidebar-heading collapsible" aria-label="uniapp"><!--[--><!--]--> uniapp <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/extjs/" class="sidebar-item sidebar-heading collapsible" aria-label="extjs"><!--[--><!--]--> extjs <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/typeScript/" class="sidebar-item sidebar-heading collapsible" aria-label="typeScript"><!--[--><!--]--> typeScript <!--[--><!--]--></a><ul style="display:none;" class="sidebar-item-children"><!--[--><li><a href="/Loren-Home/vuepress/zh/typeScript/0-安装.md" class="sidebar-item" aria-label="0-安装"><!--[--><!--]--> 0-安装 <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/typeScript/1-什么是TypeScript.md" class="sidebar-item" aria-label="1-什么是TypeScript"><!--[--><!--]--> 1-什么是TypeScript <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/typeScript/2-快速上手.md" class="sidebar-item" aria-label="2-快速上手"><!--[--><!--]--> 2-快速上手 <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/typeScript/3-常见问题.md" class="sidebar-item" aria-label="3-常见问题"><!--[--><!--]--> 3-常见问题 <!--[--><!--]--></a><!----></li><!--]--></ul></li><li><a href="/Loren-Home/vuepress/zh/nodejs/" class="sidebar-item sidebar-heading collapsible" aria-label="nodejs"><!--[--><!--]--> nodejs <!--[--><!--]--></a><ul style="display:none;" class="sidebar-item-children"><!--[--><li><a href="/Loren-Home/vuepress/zh/nodejs/nodejs多版本管理.md" class="sidebar-item" aria-label="nodejs多版本管理"><!--[--><!--]--> nodejs多版本管理 <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/nodejs/koa" class="sidebar-item collapsible" aria-label="koa"><!--[--><!--]--> koa <!--[--><!--]--></a><ul style="display:none;" class="sidebar-item-children"><!--[--><li><a href="/Loren-Home/vuepress/zh/nodejs/koa/1-关于koa.md" class="sidebar-item" aria-label="关于koa"><!--[--><!--]--> 关于koa <!--[--><!--]--></a><!----></li><!--]--></ul></li><!--]--></ul></li><li><p tabindex="0" class="sidebar-item sidebar-heading collapsible">js-css-h5 <span class="right arrow"></span></p><ul style="display:none;" class="sidebar-item-children"><!--[--><li><a href="/Loren-Home/vuepress/zh/js-css-h5/css/" class="sidebar-item" aria-label="css"><!--[--><!--]--> css <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/js-css-h5/js/" class="sidebar-item" aria-label="js"><!--[--><!--]--> js <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/js-css-h5/h5/" class="sidebar-item" aria-label="h5"><!--[--><!--]--> h5 <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/js-css-h5/http/README.md" class="sidebar-item" aria-label="http"><!--[--><!--]--> http <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/js-css-h5/sass_less/" class="sidebar-item collapsible" aria-label="sass_less"><!--[--><!--]--> sass_less <!--[--><!--]--></a><ul style="display:none;" class="sidebar-item-children"><!--[--><li><a href="/Loren-Home/vuepress/zh/js-css-h5/sass_less/1-sass_scss_less的区别.md" class="sidebar-item" aria-label="1-sass_scss_less的区别"><!--[--><!--]--> 1-sass_scss_less的区别 <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/js-css-h5/sass_less/2-scss使用.md" class="sidebar-item" aria-label="2-scss使用"><!--[--><!--]--> 2-scss使用 <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/js-css-h5/sass_less/3-js修改css变量.md" class="sidebar-item" aria-label="3-js修改css变量"><!--[--><!--]--> 3-js修改css变量 <!--[--><!--]--></a><!----></li><!--]--></ul></li><!--]--></ul></li><li><a href="/Loren-Home/vuepress/zh/nginx/" class="router-link-active sidebar-item sidebar-heading active collapsible" aria-label="nginx"><!--[--><!--]--> nginx <!--[--><!--]--></a><ul style="" class="sidebar-item-children"><!--[--><li><a href="/Loren-Home/vuepress/zh/nginx/nginx基本使用.md" class="sidebar-item active" aria-label="nginx基本使用"><!--[--><!--]--> nginx基本使用 <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/nginx/nginx进阶.md" class="sidebar-item" aria-label="nginx进阶"><!--[--><!--]--> nginx进阶 <!--[--><!--]--></a><!----></li><!--]--></ul></li><li><a href="/Loren-Home/vuepress/zh/git/" class="sidebar-item sidebar-heading collapsible" aria-label="git"><!--[--><!--]--> git <!--[--><!--]--></a><ul style="display:none;" class="sidebar-item-children"><!--[--><li><a href="/Loren-Home/vuepress/zh/git/git常见用法.md" class="sidebar-item" aria-label="git常见用法"><!--[--><!--]--> git常见用法 <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/git/git常见问题.md" class="sidebar-item" aria-label="git常见问题"><!--[--><!--]--> git常见问题 <!--[--><!--]--></a><!----></li><!--]--></ul></li><li><a href="/Loren-Home/vuepress/zh/tool/" class="sidebar-item sidebar-heading collapsible" aria-label="tool"><!--[--><!--]--> tool <!--[--><!--]--></a><ul style="display:none;" class="sidebar-item-children"><!--[--><li><a href="/Loren-Home/vuepress/zh/tool/webpack与gulp.md" class="sidebar-item" aria-label="webpack与gulp"><!--[--><!--]--> webpack与gulp <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/tool/babel.md" class="sidebar-item" aria-label="babel"><!--[--><!--]--> babel <!--[--><!--]--></a><!----></li><!--]--></ul></li><li><a href="/Loren-Home/vuepress/zh/axios/" class="sidebar-item sidebar-heading collapsible" aria-label="axios"><!--[--><!--]--> axios <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/utils/" class="sidebar-item sidebar-heading collapsible" aria-label="utils"><!--[--><!--]--> utils <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/plugin/" class="sidebar-item sidebar-heading collapsible" aria-label="plugin"><!--[--><!--]--> plugin <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/其他/" class="sidebar-item sidebar-heading collapsible" aria-label="其他"><!--[--><!--]--> 其他 <!--[--><!--]--></a><!----></li><li><a href="/Loren-Home/vuepress/zh/高频面试/" class="sidebar-item sidebar-heading collapsible" aria-label="高频面试"><!--[--><!--]--> 高频面试 <!--[--><!--]--></a><!----></li><!--]--></ul><!--[--><!--]--></aside><!--]--><!--[--><main class="page"><!--[--><!--]--><div class="theme-default-content"><!--[--><h1 id="nginx基本使用" tabindex="-1"><a class="header-anchor" href="#nginx基本使用" aria-hidden="true">#</a> nginx基本使用</h1><p>注意：使用代理时可以是http也可以是https（具体接口能否调用要看对方服务器和接口设置），局域网使用ip地址访问不可访问时 关闭防火墙，vue项目设置代理也是一样。</p><h3 id="跨协议资源访问-https、http" tabindex="-1"><a class="header-anchor" href="#跨协议资源访问-https、http" aria-hidden="true">#</a> 跨协议资源访问（https、http）</h3><p>一般https网站不能直接访问http资源，或者使用代理：在生产环境搭建第一个nginx，将请求转发到资源服务器上，即http那个链接上，在资源服务器上再次搭建nginx，将请求转发到静态资源上，达到回显作用。</p><p>http可以请求https资源，反过来不行</p><p>如果http资源支持https请求可以将http请求自动升级为https请求<br> 但大部分资源服务器不会申请https , 所以使用nginx代理</p><div class="language-html ext-html line-numbers-mode"><pre class="language-html"><code><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>meta</span> <span class="token attr-name">http-equiv</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>Content-Security-Policy<span class="token punctuation">&quot;</span></span> <span class="token attr-name">content</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>upgrade-insecure-requests<span class="token punctuation">&quot;</span></span> <span class="token punctuation">/&gt;</span></span>
+</code></pre><div class="line-numbers" aria-hidden="true"><span class="line-number">1</span><br></div></div><h3 id="注意-不要使用中文名称文件夹-路径内" tabindex="-1"><a class="header-anchor" href="#注意-不要使用中文名称文件夹-路径内" aria-hidden="true">#</a> 注意:不要使用中文名称文件夹/路径内</h3><p>否则可能会启动不了</p><h3 id="location-匹配规则" tabindex="-1"><a class="header-anchor" href="#location-匹配规则" aria-hidden="true">#</a> location 匹配规则</h3><ul><li>注意：最大匹配原则（匹配的长度最长）、匹配顺序优先原则（谁写在前面）、正则是否优先问题。</li><li>如果把“^~”这个前缀用于一个常规字符串,那么告诉nginx 如果路径匹配那么不测试正则表达式。</li></ul><table><thead><tr><th><div style="width:150px;">匹配符</div></th><th>含义</th></tr></thead><tbody><tr><td>location = /url</td><td>表示精确匹配，只有完全匹配上才能生效</td></tr><tr><td>location ^~ /url</td><td>对URL路径进行前缀匹配，并且在正则之前</td></tr><tr><td>location ^~ /url/</td><td>对URL路径进行前缀匹配，并且在正则之前 , 区别于上面url后面是否带 &quot;/&quot;</td></tr><tr><td>location /url</td><td>不带任何修饰符，也表示前缀匹配，但是在正则匹配之后</td></tr><tr><td>location ~ pattern</td><td>表示区分大小写的正则匹配</td></tr><tr><td>location ~* pattern</td><td>开头表示不区分大小写的正则匹配</td></tr><tr><td>location /</td><td>通用匹配，任何未匹配到其它location的请求都会匹配到，相当于switch中的default</td></tr></tbody></table><h3 id="正则匹配示例" tabindex="-1"><a class="header-anchor" href="#正则匹配示例" aria-hidden="true">#</a> 正则匹配示例</h3><div class="language-conf ext-conf line-numbers-mode"><pre class="language-conf"><code>location ~ \.(gif|jpg|png|js|css)$ {
+  echo &quot;正则匹配图片&quot;;
+}
+
+location ~ \.php$ {
+    proxy_set_header referer $ref;
+    proxy_pass https://xxx.com;
+}
+
+
+</code></pre><div class="line-numbers" aria-hidden="true"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br></div></div><h3 id="proxy-pass-用法" tabindex="-1"><a class="header-anchor" href="#proxy-pass-用法" aria-hidden="true">#</a> proxy_pass 用法</h3><ul><li>配置代理转发 url</li><li>url后面加/，表示绝对根路径；如果没有/，表示相对路径，把匹配的路径部分也给代理走。</li></ul><div class="language-conf ext-conf line-numbers-mode"><pre class="language-conf"><code>location ^~ /api/ {            # 如果是要匹陪“api”注意后面要加斜杠，否则它可能匹配整个路径或者api开头的所有字符
+   proxy_pass https://xxx.cn   # 实际请求 https://xxx.cn/api
+   proxy_pass https://xxx.cn/  # 实际请求 https://xxx.cn/ 
+}
+
+# 和上面几乎等效 去掉mig  (~*不区分大小写) (^/(mig)正则匹配)
+location  ~* ^/(mig) {
+    proxy_set_header Host 192.168.1.5:12320;
+    rewrite ^/mig/(.*)$ /$1 break;
+    proxy_pass http://192.168.1.5:12320;
+}
+
+</code></pre><div class="line-numbers" aria-hidden="true"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br></div></div><h3 id="基本配置" tabindex="-1"><a class="header-anchor" href="#基本配置" aria-hidden="true">#</a> 基本配置</h3><details class="custom-container details"><summary>代码示例</summary><div class="language-bash ext-sh line-numbers-mode"><pre class="language-bash"><code><span class="token comment">#user  nobody;</span>
+worker_processes  <span class="token number">1</span><span class="token punctuation">;</span>
+
+<span class="token comment">#error_log  logs/error.log;</span>
+<span class="token comment">#error_log  logs/error.log  notice;</span>
+<span class="token comment">#error_log  logs/error.log  info;</span>
+
+<span class="token comment">#pid        logs/nginx.pid;</span>
+
+
+events <span class="token punctuation">{</span>
+    worker_connections  <span class="token number">1024</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+
+http <span class="token punctuation">{</span>
+    include       mime.types<span class="token punctuation">;</span>
+    default_type  application/octet-stream<span class="token punctuation">;</span>
+
+    <span class="token comment">#log_format  main  &#39;$remote_addr - $remote_user [$time_local] &quot;$request&quot; &#39;</span>
+    <span class="token comment">#                  &#39;$status $body_bytes_sent &quot;$http_referer&quot; &#39;</span>
+    <span class="token comment">#                  &#39;&quot;$http_user_agent&quot; &quot;$http_x_forwarded_for&quot;&#39;;</span>
+
+    <span class="token comment">#access_log  logs/access.log  main;</span>
+
+    sendfile        on<span class="token punctuation">;</span>
+    <span class="token comment">#tcp_nopush     on;</span>
+
+
+    <span class="token comment"># 超时设置</span>
+    <span class="token comment"># 这些超时时间同样可以在 http、server、location 块中设置</span>
+
+    keepalive_timeout  <span class="token number">65</span><span class="token punctuation">;</span> <span class="token comment"># 设置客户端和服务器之间的 keepalive 连接的超时时间。如果在指定时间内没有活动，则连接会被关闭。</span>
+    <span class="token comment"># client_body_timeout 10s; # 如果在指定时间内客户端没有发送完整的请求体，则 Nginx 会关闭连接。</span>
+    <span class="token comment"># client_header_timeout 10s; # 如果在指定时间内客户端没有发送完整的请求头，则 Nginx 会关闭连接。</span>
+    <span class="token comment"># send_timeout; # 如果在指定时间内 Nginx 没有向客户端发送任何数据，则连接会被关闭。</span>
+    <span class="token comment"># proxy_connect_timeout 500; # 设置与代理服务器建立连接的超时时间。</span>
+    <span class="token comment"># proxy_send_timeout 500; # 设置向代理服务器发送请求的超时时间。</span>
+    <span class="token comment"># proxy_read_timeout 500; # 设置从代理服务器读取响应的超时时间。</span>
+
+
+
+    <span class="token comment">#gzip  on;</span>
+
+    <span class="token comment"># 设置http ref </span>
+    map <span class="token variable">$http_referer</span> <span class="token variable">$ref</span> <span class="token punctuation">{</span>
+        default <span class="token variable">$http_referer</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+
+    <span class="token comment"># proxy_connect_timeout 500;</span>
+    <span class="token comment"># #跟后端服务器连接的超时时间_发起握手等候响应超时时间</span>
+    <span class="token comment"># proxy_read_timeout 600;</span>
+    <span class="token comment"># #连接成功后_等候后端服务器响应的时间_其实已经进入后端的排队之中等候处理</span>
+    <span class="token comment"># proxy_send_timeout 500;</span>
+    <span class="token comment"># #后端服务器数据回传时间_就是在规定时间内后端服务器必须传完所有数据</span>
+    <span class="token comment"># proxy_buffer_size 128k;</span>
+    <span class="token comment"># #代理请求缓存区_这个缓存区间会保存用户的头信息以供Nginx进行规则处理_一般只要能保存下头信息即可  </span>
+    <span class="token comment"># proxy_buffers 4 128k;</span>
+    <span class="token comment"># #同上 告诉Nginx保存单个用的几个Buffer最大用多大空间</span>
+    <span class="token comment"># proxy_busy_buffers_size 256k;</span>
+    <span class="token comment"># #如果系统很忙的时候可以申请更大的proxy_buffers 官方推荐*2</span>
+    <span class="token comment"># proxy_temp_file_write_size 128k;</span>
+    <span class="token comment"># #proxy缓存临时文件的大小</span>
+    <span class="token comment"># proxy_temp_path D:/loren/jzWeb/web3.0/nginx_customTest/temp;</span>
+    <span class="token comment"># #用于指定本地目录来缓冲较大的代理请求</span>
+    <span class="token comment"># # proxy_cache_path /usr/local/nginx/cache levels=1:2 keys_zone=cache_one:200m inactive=1d max_size=30g;</span>
+    <span class="token comment"># #设置web缓存区名为cache_one,内存缓存空间大小为200M，自动清除超过1天没有被访问过的缓存数据，硬盘缓存空间大小30g</span>
+    
+
+    <span class="token comment"># 代理过程: </span>
+    <span class="token comment"># 先监听 8888端口 转发到vue前端项目 localhost:8084 , </span>
+    <span class="token comment"># 然后所有的数据请求代理到了 hwuat.dadayun.cn ,</span>
+    <span class="token comment"># (即: 下面配置了很多接口的转发[代理])</span>
+    
+    <span class="token comment"># 实际的vue项目本身就可以配置代理，这里只是示例</span>
+    server <span class="token punctuation">{</span>
+        listen       <span class="token number">8888</span><span class="token punctuation">;</span>
+        server_name  localhost<span class="token punctuation">;</span>
+        add_header X-XSS-Protection <span class="token string">&quot;1; mode=block&quot;</span><span class="token punctuation">;</span>
+        proxy_set_header Host <span class="token variable">$host</span><span class="token punctuation">;</span>
+        proxy_set_header X-Forwarded-For <span class="token variable">$proxy_add_x_forwarded_for</span><span class="token punctuation">;</span>
+
+        <span class="token comment">#charset koi8-r;</span>
+
+        <span class="token comment">#access_log  logs/host.access.log  main;</span>
+
+       
+
+
+        <span class="token comment"># 前端文件所在路径</span>
+		<span class="token builtin class-name">set</span> <span class="token variable">$frontend_root</span> D:<span class="token punctuation">\</span><span class="token punctuation">\</span>loren<span class="token punctuation">\</span><span class="token punctuation">\</span>jzWeb<span class="token punctuation">\</span>web3.0<span class="token punctuation">\</span><span class="token punctuation">\</span>frontEndV3<span class="token punctuation">\</span><span class="token punctuation">\</span>frontend-node<span class="token punctuation">\</span><span class="token punctuation">\</span>src<span class="token punctuation">;</span>
+
+        <span class="token comment"># 静态资源文件-请求本地-实际上也是vue项目路径</span>
+        location ^~ /assets <span class="token punctuation">{</span>
+            root <span class="token variable">$frontend_root</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+
+        <span class="token comment"># 如果您在nginx中设置了静态目录，那么nginx会自动缓存静态文件，无需再进行额外的缓存配置。</span>
+        <span class="token comment"># nginx会将静态文件缓存到内存中，并且缓存时间为10秒</span>
+        location ^~ /static <span class="token punctuation">{</span>
+            
+            root <span class="token variable">$frontend_root</span><span class="token punctuation">;</span>
+
+
+            <span class="token comment"># 修改缓存配置</span>
+
+            <span class="token comment"># expires参数指定缓存时间，这里设置为1天</span>
+            expires 1d<span class="token punctuation">;</span> 
+            <span class="token comment"># expires 30s; # 缓存时间为30秒</span>
+            <span class="token comment"># expires 30m; # 缓存时间为30分钟</span>
+            <span class="token comment"># expires 3h; # 缓存时间为3小时</span>
+
+            <span class="token comment"># 设置为public，表示可以被任何缓存服务器缓存</span>
+            add_header Cache-Control <span class="token string">&quot;public&quot;</span><span class="token punctuation">;</span>
+
+            <span class="token comment"># 需要注意的是，如果您的静态文件经常更新，建议不要设置过长的缓存时间，否则可能会导致客户端无法获取最新的文件。</span>
+
+        <span class="token punctuation">}</span>
+
+
+        <span class="token comment"># 若缓存代理服务端静态文件</span>
+        <span class="token comment">#  location ~ .*\.(js|css|gif|jpg|jpeg|png|bmp|swf|flv|html|htm)$ {</span>
+
+        <span class="token comment">#     # 需先在http配置区配置proxy_cache_path</span>
+
+        <span class="token comment">#     # proxy_pass http://proxyserver;</span>
+        <span class="token comment">#     # proxy_set_header Host proxyserver;</span>
+
+        <span class="token comment">#     # proxy_redirect default;</span>
+        <span class="token comment">#     # proxy_set_header X-Forwarded-For $remote_addr;</span>
+        <span class="token comment">#     # proxy_cache cache_one;</span>
+        <span class="token comment">#     # proxy_cache_valid 200 304 5m;</span>
+        <span class="token comment">#     # proxy_cache_valid any 1m;</span>
+        <span class="token comment">#     # proxy_cache_key $host$uri$is_args$args;</span>
+        <span class="token comment">#     # add_header Nginx-Cache &quot;$upstream_cache_status&quot;;</span>
+        <span class="token comment">#     # expires 10d;</span>
+        <span class="token comment"># }</span>
+
+
+        <span class="token comment"># 正则匹配</span>
+        <span class="token comment"># location ~* \.html$ {</span>
+        <span class="token comment">#     root $frontend_root;</span>
+        <span class="token comment">#     try_files $uri $uri/ /404.html;</span>
+        <span class="token comment"># }</span>
+
+        <span class="token comment"># 最好用上面这种</span>
+
+        <span class="token comment"># location ~* /(index|reader|ads_test) {</span>
+        <span class="token comment">#     root $frontend_root;</span>
+        <span class="token comment"># }</span>
+
+
+        <span class="token comment"># 数据请求-转发（代理）请求 https://hwuat.dadayun.cn/v1/</span>
+        location /v1/ <span class="token punctuation">{</span>
+            <span class="token comment"># 设置请求header Host</span>
+            proxy_set_header Host xxx.cn<span class="token punctuation">;</span>
+            <span class="token comment"># 设置请求header referer (防盗链的作用)</span>
+            proxy_set_header referer <span class="token variable">$ref</span><span class="token punctuation">;</span>
+            <span class="token comment"># 设置请求地址</span>
+            proxy_pass https://xxx.cn/v1/<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        location ~ <span class="token punctuation">\</span>.php$ <span class="token punctuation">{</span>
+            proxy_set_header referer <span class="token variable">$ref</span><span class="token punctuation">;</span>
+            proxy_pass https://xxx.cn<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+
+        <span class="token comment"># 默认页面, 输入域名即显示前端 index.html</span>
+        location <span class="token operator">=</span>/ <span class="token punctuation">{</span>
+            root <span class="token variable">$frontend_root</span><span class="token punctuation">;</span>
+            index index.html<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment"># 默认转到（代理）vue项目</span>
+        location / <span class="token punctuation">{</span>
+            <span class="token comment"># vue项目端口</span>
+            proxy_set_header localhost:8084<span class="token punctuation">;</span>
+            proxy_pass http://localhost:8084<span class="token punctuation">;</span>
+
+            <span class="token comment"># 如果是本地非vue（或非带服务的项目 如php）</span>
+            <span class="token comment"># root $frontend_root;</span>
+            <span class="token comment"># index index.php;</span>
+            
+        <span class="token punctuation">}</span>
+
+        <span class="token comment"># 给接口添加支持 CORS 的配置（也可以全局配置，放在server里）：</span>
+        <span class="token comment"># 配置是为了从别的域名、端口号也可以访问nginx所代理的域名端口号，从而实现别的域名可跨域访问nginx</span>
+        location /rest<span class="token punctuation">{</span>
+            <span class="token comment"># 给OPTIONS添加200的返回，是为了处理在发送POST请求时Nginx依然拒绝访问的错误,</span>
+            <span class="token comment"># 发送&quot;预检请求&quot;时，需要用到方法 OPTIONS ,所以服务器需要允许该方法。</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token variable">$request_method</span> <span class="token operator">=</span> <span class="token string">&#39;OPTIONS&#39;</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                add_header Access-Control-Allow-Origin * always<span class="token punctuation">;</span>
+                add_header Access-Control-Allow-Methods <span class="token string">&#39;GET,POST,PUT,DELETE,OPTIONS&#39;</span><span class="token punctuation">;</span>
+                add_header Access-Control-Allow-Headers <span class="token string">&#39;DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range&#39;</span><span class="token punctuation">;</span>
+                <span class="token builtin class-name">return</span> <span class="token number">200</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            add_header Access-Control-Allow-Origin <span class="token string">&#39;*&#39;</span> always<span class="token punctuation">;</span>
+            add_header Access-Control-Allow-Methods <span class="token string">&#39;GET, PUT, POST, DELETE, OPTIONS&#39;</span><span class="token punctuation">;</span>
+            add_header Access-Control-Allow-Headers <span class="token string">&#39;DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range&#39;</span><span class="token punctuation">;</span>
+             <span class="token comment"># 如果跨域请求携带了自定义请求头，那么服务器端需要设置 Access-Control-Allow-Headers 响应头，以允许这些请求头。如果服务器端没有正确设置Access-Control-Allow-Headers，那么即使设置了Access-Control-Allow-Origin: *，仍然会出现CORS错误。</span>
+
+            proxy_pass  http://ip:port/thing<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+ 
+
+
+        <span class="token comment"># 或者 用以下定义404</span>
+
+        error_page <span class="token number">404</span> /404.html<span class="token punctuation">;</span>
+        location <span class="token operator">=</span> /404.html <span class="token punctuation">{</span>
+            root <span class="token variable">$frontend_root</span><span class="token punctuation">;</span>
+            <span class="token comment"># internal; # internal指令用于限制只能通过内部重定向访问该location块内的内容</span>
+        <span class="token punctuation">}</span>
+
+
+        error_page   <span class="token number">500</span> <span class="token number">502</span> <span class="token number">503</span> <span class="token number">504</span>  /50x.html<span class="token punctuation">;</span>
+        location <span class="token operator">=</span> /50x.html <span class="token punctuation">{</span>
+            root  <span class="token variable">$frontend_root</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+
+        <span class="token comment"># location / 优先级高，在上面定义404，50x</span>
+        <span class="token comment">#error_page  404              /404.html;</span>
+
+        <span class="token comment"># redirect server error pages to the static page /50x.html</span>
+        <span class="token comment">#</span>
+      
+    <span class="token punctuation">}</span>
+
+    <span class="token comment"># HTTPS server</span>
+    <span class="token comment">#</span>
+    <span class="token comment">#server {</span>
+    <span class="token comment">#    listen       443 ssl;</span>
+    <span class="token comment">#    server_name  localhost;</span>
+
+    <span class="token comment">#    ssl_certificate      cert.pem;</span>
+    <span class="token comment">#    ssl_certificate_key  cert.key;</span>
+
+    <span class="token comment">#    ssl_session_cache    shared:SSL:1m;</span>
+    <span class="token comment">#    ssl_session_timeout  5m;</span>
+
+    <span class="token comment">#    ssl_ciphers  HIGH:!aNULL:!MD5;</span>
+    <span class="token comment">#    ssl_prefer_server_ciphers  on;</span>
+
+    <span class="token comment">#    location / {</span>
+    <span class="token comment">#        root   html;</span>
+    <span class="token comment">#        index  index.html index.htm;</span>
+    <span class="token comment">#    }</span>
+    <span class="token comment">#}</span>
+
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br><span class="line-number">35</span><br><span class="line-number">36</span><br><span class="line-number">37</span><br><span class="line-number">38</span><br><span class="line-number">39</span><br><span class="line-number">40</span><br><span class="line-number">41</span><br><span class="line-number">42</span><br><span class="line-number">43</span><br><span class="line-number">44</span><br><span class="line-number">45</span><br><span class="line-number">46</span><br><span class="line-number">47</span><br><span class="line-number">48</span><br><span class="line-number">49</span><br><span class="line-number">50</span><br><span class="line-number">51</span><br><span class="line-number">52</span><br><span class="line-number">53</span><br><span class="line-number">54</span><br><span class="line-number">55</span><br><span class="line-number">56</span><br><span class="line-number">57</span><br><span class="line-number">58</span><br><span class="line-number">59</span><br><span class="line-number">60</span><br><span class="line-number">61</span><br><span class="line-number">62</span><br><span class="line-number">63</span><br><span class="line-number">64</span><br><span class="line-number">65</span><br><span class="line-number">66</span><br><span class="line-number">67</span><br><span class="line-number">68</span><br><span class="line-number">69</span><br><span class="line-number">70</span><br><span class="line-number">71</span><br><span class="line-number">72</span><br><span class="line-number">73</span><br><span class="line-number">74</span><br><span class="line-number">75</span><br><span class="line-number">76</span><br><span class="line-number">77</span><br><span class="line-number">78</span><br><span class="line-number">79</span><br><span class="line-number">80</span><br><span class="line-number">81</span><br><span class="line-number">82</span><br><span class="line-number">83</span><br><span class="line-number">84</span><br><span class="line-number">85</span><br><span class="line-number">86</span><br><span class="line-number">87</span><br><span class="line-number">88</span><br><span class="line-number">89</span><br><span class="line-number">90</span><br><span class="line-number">91</span><br><span class="line-number">92</span><br><span class="line-number">93</span><br><span class="line-number">94</span><br><span class="line-number">95</span><br><span class="line-number">96</span><br><span class="line-number">97</span><br><span class="line-number">98</span><br><span class="line-number">99</span><br><span class="line-number">100</span><br><span class="line-number">101</span><br><span class="line-number">102</span><br><span class="line-number">103</span><br><span class="line-number">104</span><br><span class="line-number">105</span><br><span class="line-number">106</span><br><span class="line-number">107</span><br><span class="line-number">108</span><br><span class="line-number">109</span><br><span class="line-number">110</span><br><span class="line-number">111</span><br><span class="line-number">112</span><br><span class="line-number">113</span><br><span class="line-number">114</span><br><span class="line-number">115</span><br><span class="line-number">116</span><br><span class="line-number">117</span><br><span class="line-number">118</span><br><span class="line-number">119</span><br><span class="line-number">120</span><br><span class="line-number">121</span><br><span class="line-number">122</span><br><span class="line-number">123</span><br><span class="line-number">124</span><br><span class="line-number">125</span><br><span class="line-number">126</span><br><span class="line-number">127</span><br><span class="line-number">128</span><br><span class="line-number">129</span><br><span class="line-number">130</span><br><span class="line-number">131</span><br><span class="line-number">132</span><br><span class="line-number">133</span><br><span class="line-number">134</span><br><span class="line-number">135</span><br><span class="line-number">136</span><br><span class="line-number">137</span><br><span class="line-number">138</span><br><span class="line-number">139</span><br><span class="line-number">140</span><br><span class="line-number">141</span><br><span class="line-number">142</span><br><span class="line-number">143</span><br><span class="line-number">144</span><br><span class="line-number">145</span><br><span class="line-number">146</span><br><span class="line-number">147</span><br><span class="line-number">148</span><br><span class="line-number">149</span><br><span class="line-number">150</span><br><span class="line-number">151</span><br><span class="line-number">152</span><br><span class="line-number">153</span><br><span class="line-number">154</span><br><span class="line-number">155</span><br><span class="line-number">156</span><br><span class="line-number">157</span><br><span class="line-number">158</span><br><span class="line-number">159</span><br><span class="line-number">160</span><br><span class="line-number">161</span><br><span class="line-number">162</span><br><span class="line-number">163</span><br><span class="line-number">164</span><br><span class="line-number">165</span><br><span class="line-number">166</span><br><span class="line-number">167</span><br><span class="line-number">168</span><br><span class="line-number">169</span><br><span class="line-number">170</span><br><span class="line-number">171</span><br><span class="line-number">172</span><br><span class="line-number">173</span><br><span class="line-number">174</span><br><span class="line-number">175</span><br><span class="line-number">176</span><br><span class="line-number">177</span><br><span class="line-number">178</span><br><span class="line-number">179</span><br><span class="line-number">180</span><br><span class="line-number">181</span><br><span class="line-number">182</span><br><span class="line-number">183</span><br><span class="line-number">184</span><br><span class="line-number">185</span><br><span class="line-number">186</span><br><span class="line-number">187</span><br><span class="line-number">188</span><br><span class="line-number">189</span><br><span class="line-number">190</span><br><span class="line-number">191</span><br><span class="line-number">192</span><br><span class="line-number">193</span><br><span class="line-number">194</span><br><span class="line-number">195</span><br><span class="line-number">196</span><br><span class="line-number">197</span><br><span class="line-number">198</span><br><span class="line-number">199</span><br><span class="line-number">200</span><br><span class="line-number">201</span><br><span class="line-number">202</span><br><span class="line-number">203</span><br><span class="line-number">204</span><br><span class="line-number">205</span><br><span class="line-number">206</span><br><span class="line-number">207</span><br><span class="line-number">208</span><br><span class="line-number">209</span><br><span class="line-number">210</span><br><span class="line-number">211</span><br><span class="line-number">212</span><br><span class="line-number">213</span><br><span class="line-number">214</span><br><span class="line-number">215</span><br><span class="line-number">216</span><br><span class="line-number">217</span><br><span class="line-number">218</span><br><span class="line-number">219</span><br><span class="line-number">220</span><br><span class="line-number">221</span><br><span class="line-number">222</span><br><span class="line-number">223</span><br><span class="line-number">224</span><br><span class="line-number">225</span><br><span class="line-number">226</span><br><span class="line-number">227</span><br><span class="line-number">228</span><br><span class="line-number">229</span><br><span class="line-number">230</span><br><span class="line-number">231</span><br><span class="line-number">232</span><br><span class="line-number">233</span><br><span class="line-number">234</span><br><span class="line-number">235</span><br><span class="line-number">236</span><br><span class="line-number">237</span><br><span class="line-number">238</span><br><span class="line-number">239</span><br><span class="line-number">240</span><br><span class="line-number">241</span><br><span class="line-number">242</span><br><span class="line-number">243</span><br><span class="line-number">244</span><br><span class="line-number">245</span><br><span class="line-number">246</span><br><span class="line-number">247</span><br><span class="line-number">248</span><br><span class="line-number">249</span><br><span class="line-number">250</span><br><span class="line-number">251</span><br><span class="line-number">252</span><br><span class="line-number">253</span><br><span class="line-number">254</span><br><span class="line-number">255</span><br></div></div><h3 id="基于访问域名进行分发" tabindex="-1"><a class="header-anchor" href="#基于访问域名进行分发" aria-hidden="true">#</a> 基于访问域名进行分发</h3><div class="language-bash ext-sh line-numbers-mode"><pre class="language-bash"><code><span class="token comment"># 当客户端访问www.xxx.com,监听端口号为80,直接跳转到data/www目录下文件</span>
+server <span class="token punctuation">{</span>
+    listen       <span class="token number">80</span><span class="token punctuation">;</span>
+    server_name  www.xxx.com<span class="token punctuation">;</span>
+    location / <span class="token punctuation">{</span>
+        root   data/www<span class="token punctuation">;</span>
+        index  index.html index.htm<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment"># 当客户端访问www.lijie.com,监听端口号为80,直接跳转到data/bbs目录下文件</span>
+    server <span class="token punctuation">{</span>
+    listen       <span class="token number">80</span><span class="token punctuation">;</span>
+    server_name  bbs.xxx.com<span class="token punctuation">;</span>
+    location / <span class="token punctuation">{</span>
+        root   data/bbs<span class="token punctuation">;</span>
+        index  index.html index.htm<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br></div></div></details><h1 id="本地调试代理到https-请求时报错502" tabindex="-1"><a class="header-anchor" href="#本地调试代理到https-请求时报错502" aria-hidden="true">#</a> 本地调试代理到https，请求时报错502</h1><p>解决：添加 proxy_ssl_server_name on</p><p>原因：nginx反向代理，在请求时DNS域名进行解析，真正请求出去的为IP与端口，但对方系统是多个域名对应一个公网ip，这个一个公网IP下映射到了多个项目和服务，通过nginx的server_name进行区分。</p><details class="custom-container details"><summary>示例</summary><div class="language-text ext-text line-numbers-mode"><pre class="language-text"><code>location / {
+    proxy_ssl_server_name on;
+    proxy_set_header Host ywzypt.fzgxctgroup.com;
+    proxy_pass https://ywzypt.fzgxctgroup.com; 
+}
+</code></pre><div class="line-numbers" aria-hidden="true"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br></div></div></details><!--]--></div><footer class="page-meta"><!----><div class="meta-item last-updated"><span class="meta-item-label">上次更新: </span><!----></div><!----></footer><!----><!--[--><!--]--></main><!--]--></div><!----><!--]--></div>
+    <script type="module" src="/Loren-Home/vuepress/assets/app.5c80a7c1.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="utf-8" />
+  <title>css三角</title>
+  <script>
+    function isIE() {
+      debugger;
+      var ua = window.navigator.userAgent;
+      var msie = ua.indexOf('MSIE ');
+      if (msie > 0) {
+        // IE 10或更早版本的情况
+        return true;
+      }
+
+      var trident = ua.indexOf('Trident/');
+      if (trident > 0) {
+        // IE11的情况
+        return true;
+      }
+
+      var edge = ua.indexOf('Edge/');
+      if (edge > 0) {
+        // Edge（基于Chromium）的情况
+        return false;
+      }
+
+      // 其他浏览器，返回false
+      return false;
+    }
+    var IE = isIE();
+    if (IE) {
+      alert('不支持当前浏览器！请使用chrome、Edge等浏览器。')
+    }
+
+  </script>
+</head>
+<style>
+  * {
+    margin: 0 auto;
+  }
+
+  div {
+    display: inline-block;
+    margin: 30px;
+  }
+
+  .arrow {
+    margin: 0 80px;
+  }
+
+  #triangle-up {
+    width: 0;
+    height: 0;
+    border-left: 50px solid transparent;
+    border-right: 50px solid transparent;
+    border-bottom: 100px solid #2caeff;
+  }
+
+  #triangle-down {
+    width: 0;
+    height: 0;
+    border-left: 50px solid transparent;
+    border-right: 50px solid transparent;
+    border-top: 100px solid #2caeff;
+  }
+
+  #triangle-left {
+    width: 0;
+    height: 0;
+    border-top: 50px solid transparent;
+    border-right: 100px solid #2caeff;
+    border-bottom: 50px solid transparent;
+  }
+
+  #triangle-right {
+    width: 0;
+    height: 0;
+    border-top: 50px solid transparent;
+    border-left: 100px solid #2caeff;
+    border-bottom: 50px solid transparent;
+  }
+
+  #triangle-topleft {
+    width: 0;
+    height: 0;
+    border-top: 100px solid #2caeff;
+    border-right: 100px solid transparent;
+  }
+
+  #triangle-topright {
+    width: 0;
+    height: 0;
+    border-top: 100px solid #2caeff;
+    border-left: 100px solid transparent;
+  }
+
+  #triangle-bottomleft {
+    width: 0;
+    height: 0;
+    border-bottom: 100px solid #2caeff;
+    border-right: 100px solid transparent;
+  }
+
+  #triangle-bottomright {
+    width: 0;
+    height: 0;
+    border-bottom: 100px solid #2caeff;
+    border-left: 100px solid transparent;
+    /*border-right: 100px solid #2caeff;*/
+  }
+
+  /*箭头*/
+  /*右*/
+  #triangle-facing-right {
+    display: inline-block;
+    border-right: 24px solid;
+    border-bottom: 24px solid;
+    width: 100px;
+    height: 100px;
+    transform: rotate(-45deg);
+  }
+
+  /*左*/
+  #triangle-facing-left {
+    display: inline-block;
+    border-left: 24px solid;
+    border-bottom: 24px solid;
+    width: 100px;
+    height: 100px;
+    transform: rotate(45deg);
+  }
+
+  /*下*/
+  #triangle-facing-bottom {
+    display: inline-block;
+    border-right: 24px solid;
+    border-bottom: 24px solid;
+    width: 100px;
+    height: 100px;
+    transform: rotate(45deg);
+    transform-origin: center 0%;
+  }
+
+  #triangle-facing-top {
+    display: inline-block;
+    border-left: 24px solid;
+    border-bottom: 24px solid;
+    width: 100px;
+    height: 100px;
+    transform: rotate(135deg);
+    transform-origin: 0% center;
+  }
+</style>
+
+<body>
+  <div id="triangle-up"></div>
+  <div id="triangle-down"></div>
+  <div id="triangle-left"></div>
+  <div id="triangle-right"></div>
+  <div id="triangle-topleft"></div>
+  <div id="triangle-topright"></div>
+  <div id="triangle-bottomleft"></div>
+  <div id="triangle-bottomright"></div>
+
+  <br />
+  <br />
+
+  <!--箭头-->
+  <div id="triangle-facing-right" class="arrow"></div>
+  <div id="triangle-facing-left" class="arrow"></div>
+  <div id="triangle-facing-top" class="arrow"></div>
+  <div id="triangle-facing-bottom" class="arrow"></div>
+</body>
+
+</html>

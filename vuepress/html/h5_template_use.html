@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="renderer" content="webkit" />
+
+    <script src="../utils/commonResource.js?times=100"></script>
+    <script>
+        // 执行引入共用资源
+        setCommonResource('../');
+    </script>
+
+
+    <!-- 构建新模板 - 也引用了公共模板 -->
+    <script id="header-template" type="text/x-handlebars-template">
+            <p>以下成功引入公共header 并传入了title数据：</p>
+            {{> header}}
+            <p>{{content}}</p>
+    </script>
+    <script id="footer-template" type="text/x-handlebars-template">
+            <p style="margin-top:300px">以下成功引入公共footer：</p>
+            {{> footer}}
+    </script>
+
+
+    <!-- 构建数据和编译渲染模板 -->
+    <script>
+        window.addEventListener('load', function () {
+            // 构建数据
+            var data = {
+                title: 'My Page',
+                content: 'This is my page content.'
+            };
+
+            $.get('./template/header.html', function (header_source) {
+                // 直接编译使用
+                // var template = Handlebars.compile(header_source);
+                // var html = template(data);
+                // $('.header').html(html);
+
+
+                // 获取新模板内容
+                var source = document.getElementById('header-template').innerHTML;
+                // 编译渲染模板
+                var template = Handlebars.compile(source);
+                // 第二个参数中传递一个partials选项，该选项包含一个名为common的属性，其值为common.html模板的内容；
+                // 这样，在渲染page.html模板时，Handlebars会自动将{{> common}}替换成common.html模板的内容。
+                var html = template(data, {
+                    partials: {
+                        header: header_source
+                    }
+                });
+                $('.header').html(html)
+            });
+
+            $.get('./template/footer.html', function (footer_source) {
+                // 直接编译使用
+                // var template = Handlebars.compile(footer_source);
+                // var html = template(data);
+                // $('.footer').html(html);
+
+
+
+                // 获取新模板内容
+                var source = document.getElementById('footer-template').innerHTML;
+                // 编译渲染模板
+                var template = Handlebars.compile(source);
+                // 第二个参数中传递一个partials选项，该选项包含一个名为common的属性，其值为common.html模板的内容；
+                // 这样，在渲染page.html模板时，Handlebars会自动将{{> common}}替换成common.html模板的内容。
+                var html = template(data, {
+                    partials: {
+                        footer: footer_source
+                    }
+                });
+                $('.footer').html(html);
+            });
+
+        })
+    </script>
+
+
+
+</head>
+
+<body>
+    <div class="header"></div>
+    <div class="footer"></div>
+</body>
+
+</html>

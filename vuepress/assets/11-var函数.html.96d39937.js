@@ -1,0 +1,1 @@
+const e={key:"v-e52b4372",path:"/zh/js-css-h5/css/11-var%E5%87%BD%E6%95%B0.html",title:"var \u51FD\u6570",lang:"zh-CN",frontmatter:{},excerpt:"",headers:[],git:{updatedTime:1651056004e3,contributors:[{name:"loren.lou",email:"loren.luo@jiuzhang.net",commits:1}]},filePathRelative:"zh/js-css-h5/css/11-var\u51FD\u6570.md"};export{e as data};

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>盒子模型布局的两种方式</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      font-family: "微软雅黑";
+    }
+
+    p.title {
+      text-align: center;
+      margin: 40px 0 20px 0;
+      font-size: 18px;
+    }
+
+    /*前缀*/
+    /*-webkit-;*/
+    /*-moz-;*/
+
+    /*      类型1：display:box     子元素不是1:1的时候分不均匀, 如2:1时,真实的不是2:1, 最好用flex  */
+    .box {
+      /*  1.                    */
+      display: box;
+      display: -moz-box;
+      display: -webkit-box;
+
+      /*  2.  子代按水平排列或竖直排列   */
+      /*box-orient:horizontal/vertical*/
+      -webkit-box-orient: horizontal;
+      -moz-box-orient: horizontal;
+      box-orient: horizontal;
+
+      /*  3        子代的排列顺序，正向，反向      */
+      /*box-direction:normal/reverse*/
+      -webkit-box-direction: normal;
+      -moz-box-direction: normal;
+      box-direction: normal;
+
+      /*   4.  子代的垂直对齐方式      , 注意不是内容对齐，是子代于子代之间对齐  ，且 box-orient为垂直排列才能用  ，否则box-flex会无效      */
+      /*box-align:start/end/center/stretch(stretch拉伸子代的高度，与父级设置的高度一致。子代height无效)*/
+      -webkit-box-align: start;
+      -moz-box-align: start;
+      box-align: start;
+
+      /*  5.  子代的水平对齐方式  , 与上面的垂直对齐同理   */
+      /*box-pack:start/end/center*/
+      -webkit-box-pack: start;
+      -moz-box-pack: start;
+      box-pack: start;
+
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .box li {
+      -moz-box-flex: 1;
+      -webkit-box-flex: 1;
+      box-flex: 1;
+      list-style-type: none;
+      min-height: 30vh;
+      color: #fff;
+      text-align: center;
+
+      display: box;
+      display: -moz-box;
+      display: -webkit-box;
+      -webkit-box-align: center;
+      -webkit-box-pack: center;
+    }
+
+    .box li:first-of-type {
+      background-color: #333;
+      /*下面子代有固定高度时，是使子代的内容居中*/
+
+      padding: 0 50px;
+    }
+
+    .box li:nth-of-type(2) {
+      background-color: red;
+    }
+
+    /*      类型2：display:flex      */
+    .flex {
+      /*  1.                    */
+      display: flex;
+      display: -moz-felx;
+      display: -webkit-felx;
+
+      /*  2.  子代按水平排列或竖直排列   */
+      /*flex-direction/row/reverse/column/column-reverse  */
+      flex-direction: row;
+
+      /*  3        子代是否换行        */
+      /*flex-wrap:nowrap/wrap/wrap-reverse  */
+      flex-wrap: nowrap;
+
+      /*   4.  上面两种属性的简写      */
+      /* flex-flow     */
+      flex-flow: row nowrap;
+
+      /*  5.  项目在水平方向的对齐方式。   */
+      /*justify-content: flex-start | flex-end | center | space-between（两端对齐，中间等隔） | space-around（每个项目等隔）; */
+      justify-content: center;
+
+      /* 6.  项目在垂直方向的对齐方式。   */
+      /*align-items: flex-start | flex-end | center | baseline | stretch;   */
+      align-items: center;
+
+      /*  7.  项目在多轴方向的对齐方式。   */
+      /*align-content: flex-start | flex-end | center | space-between | space-around | stretch;  */
+      align-content: center;
+
+      width: 100%;
+    }
+
+    .flex li {
+      /*  1.   数值越小，排列越靠前，默认为0  */
+      order: 1;
+
+      /*  2.   有剩余空间时 项目的放大比例   0 不放大   */
+      flex-grow: 1;
+
+      /*  3.   空间不足时 项目的缩小比例   0 不缩小      */
+      flex-shrink: 1;
+
+      /*  4.   分配多余空间之前，项目占据的主轴空间   ， auto，即项目的本来大小   */
+      flex-basis: auto;
+
+      /*  5.   上面3个的结合    0 1 auto(后二可选)    */
+      flex: 1;
+
+      /*  6.   允许单个项目有与其他项目不一样的对齐方式       */
+      /*align-self: auto | flex-start | flex-end | center | baseline | stretch;*/
+      align-self: flex-end;
+
+      list-style-type: none;
+      min-height: 30vh;
+      color: #fff;
+      text-align: center;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .flex li:first-of-type {
+      background-color: #333;
+      flex: 2;
+    }
+
+    .flex li:nth-of-type(2) {
+      background-color: red;
+    }
+  </style>
+  <style>
+    .container {
+      width: 800px;
+      height: 300px;
+      display: flex;
+    }
+
+    .left {
+      flex: 1 2 300px;
+      background-color: red;
+    }
+
+    .right {
+      flex: 2 1 200px;
+      background-color: blue;
+    }
+  </style>
+</head>
+
+<body>
+  <p class="title">目的：实现左右 2:1 比例</p>
+  <p class="title">
+    box布局 不均分：子元素不是1:1的时候分不均匀, 如2:1时,真实的不是2:1,
+    最好用flex
+  </p>
+  <ul class="box">
+    <li>div box 2</li>
+    <li>div box 1</li>
+  </ul>
+  <p class="title">flex布局 均分</p>
+  <ul class="flex">
+    <li>div flex 2</li>
+    <li>div flex 1</li>
+  </ul>
+
+  <!-- ‌计算空间不足量‌：
+  
+  父容器宽度：400px
+  子元素基础宽度之和：500px
+  空间不足量：500px - 400px = 100px
+  ‌计算总shrink权重‌：
+  
+  .left的shrink权重：2 * 300px = 600
+  .right的shrink权重：1 * 200px = 200
+  总shrink权重：600 + 200 = 800
+  ‌计算每个子元素的shrink量‌：
+  
+  .left的shrink量：(100px * 600) / 800 = 75px
+  .right的shrink量：(100px * 200) / 800 = 25px
+  ‌计算最终宽度‌：
+  
+  .left的最终宽度：300px - 75px = 225px
+  .right的最终宽度：200px - 25px = 175px -->
+
+
+  <!-- 800px 空间充足时的计算 300=800-500
+  .left获得的额外空间是(300px * 1) / 3 = 100px。
+  .right获得的额外空间是(300px * 2) / 3 = 200px -->
+  <div class="container">
+    <div class="left"></div>
+    <div class="right"></div>
+  </div>
+</body>
+
+</html>
