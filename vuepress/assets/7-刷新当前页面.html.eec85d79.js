@@ -1,0 +1,47 @@
+import{_ as s,p as a}from"./app.e6691f45.js";const p={};function t(e,n){return n[0]||(n[0]=a(`<h3 style="text-align:center;">vue\u5237\u65B0\u5F53\u524D\u9875\u9762</h3><h1 id="\u65B9\u6CD5" tabindex="-1"><a class="header-anchor" href="#\u65B9\u6CD5" aria-hidden="true">#</a> \u65B9\u6CD5</h1><h4 id="_1-\u8DEF\u7531\u8DF3\u8F6C-\u8BE6\u89C1\u8DEF\u7531\u8DF3\u8F6C\u76843\u4E2D\u65B9\u5F0F-\u9875\u9762\u4E0D\u5237\u65B0" tabindex="-1"><a class="header-anchor" href="#_1-\u8DEF\u7531\u8DF3\u8F6C-\u8BE6\u89C1\u8DEF\u7531\u8DF3\u8F6C\u76843\u4E2D\u65B9\u5F0F-\u9875\u9762\u4E0D\u5237\u65B0" aria-hidden="true">#</a> 1. \u8DEF\u7531\u8DF3\u8F6C(\u8BE6\u89C1\u8DEF\u7531\u8DF3\u8F6C\u76843\u4E2D\u65B9\u5F0F) -- \u9875\u9762\u4E0D\u5237\u65B0</h4><h4 id="_2-this-router-go-0-\u9875\u9762\u5237\u65B0-\u4F46\u4F1A\u95EA\u4E00\u4E0B" tabindex="-1"><a class="header-anchor" href="#_2-this-router-go-0-\u9875\u9762\u5237\u65B0-\u4F46\u4F1A\u95EA\u4E00\u4E0B" aria-hidden="true">#</a> 2. <code>this.$router.go(0)</code> -- \u9875\u9762\u5237\u65B0\uFF0C\u4F46\u4F1A\u95EA\u4E00\u4E0B</h4><h4 id="_3-location-reload-\u9875\u9762\u5237\u65B0-\u4F46\u4F1A\u95EA\u4E00\u4E0B" tabindex="-1"><a class="header-anchor" href="#_3-location-reload-\u9875\u9762\u5237\u65B0-\u4F46\u4F1A\u95EA\u4E00\u4E0B" aria-hidden="true">#</a> 3. <code>location.reload()</code> -- \u9875\u9762\u5237\u65B0\uFF0C\u4F46\u4F1A\u95EA\u4E00\u4E0B</h4><h4 id="_4-\u5185\u7F6E\u65B9\u6CD5-\u91CD\u8F7D\u90E8\u5206\u533A\u57DF-\u4E0D\u6574\u4E2A\u5237\u65B0" tabindex="-1"><a class="header-anchor" href="#_4-\u5185\u7F6E\u65B9\u6CD5-\u91CD\u8F7D\u90E8\u5206\u533A\u57DF-\u4E0D\u6574\u4E2A\u5237\u65B0" aria-hidden="true">#</a> 4. \u5185\u7F6E\u65B9\u6CD5\uFF1A\u91CD\u8F7D\u90E8\u5206\u533A\u57DF\uFF0C\u4E0D\u6574\u4E2A\u5237\u65B0</h4><h4 id="_5-\u7528-provide-inject-\u7EC4\u5408-\u63A7\u5236-router-view-\u7684\u663E\u793A\u6216\u9690\u85CF-\u4ECE\u800C\u63A7\u5236\u9875\u9762\u7684\u518D\u6B21\u52A0\u8F7D" tabindex="-1"><a class="header-anchor" href="#_5-\u7528-provide-inject-\u7EC4\u5408-\u63A7\u5236-router-view-\u7684\u663E\u793A\u6216\u9690\u85CF-\u4ECE\u800C\u63A7\u5236\u9875\u9762\u7684\u518D\u6B21\u52A0\u8F7D" aria-hidden="true">#</a> 5. \u7528 <code>provide / inject</code> \u7EC4\u5408\uFF0C\u63A7\u5236 <code>router-view</code> \u7684\u663E\u793A\u6216\u9690\u85CF\uFF0C\u4ECE\u800C\u63A7\u5236\u9875\u9762\u7684\u518D\u6B21\u52A0\u8F7D</h4><div class="language-html ext-html line-numbers-mode"><pre class="language-html"><code><span class="token comment">&lt;!-- provide / inject \u7EC4\u5408\u4F7F\u7528 --&gt;</span>
+
+<span class="token comment">&lt;!-- \u7236\u7EC4\u4EF6 \u6216\u8005\u662F \uFF08App.vue,\u53EF\u4F7F\u7528\u5728\u6240\u6709\u7EC4\u4EF6\u91CC\uFF09 --&gt;</span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>template</span><span class="token punctuation">&gt;</span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>app<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>router-view</span> <span class="token attr-name">v-if</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">&quot;</span>isRouterAlive<span class="token punctuation">&quot;</span></span><span class="token punctuation">&gt;</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>router-view</span><span class="token punctuation">&gt;</span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">&gt;</span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>template</span><span class="token punctuation">&gt;</span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span><span class="token punctuation">&gt;</span></span><span class="token script"><span class="token language-javascript">
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">&#39;App&#39;</span><span class="token punctuation">,</span>
+  <span class="token function">provide</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">reload</span><span class="token operator">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span>reload
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token function">data</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">isRouterAlive</span><span class="token operator">:</span> <span class="token boolean">true</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">methods</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token function">reload</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>isRouterAlive <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+      <span class="token comment">// \u9690\u85CF\u7ED3\u675F\u540E\u91CD\u65B0\u663E\u793A</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">$nextTick</span><span class="token punctuation">(</span><span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>isRouterAlive <span class="token operator">=</span> <span class="token boolean">true</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">&gt;</span></span>
+
+
+ <span class="token comment">&lt;!-- \u5B50\u7EC4\u4EF6\uFF1A --&gt;</span>
+export default {
+    inject:[&#39;reload&#39;]
+    data(){},
+    methods:{
+        someEvent(){
+            this.reload();
+        },
+    }
+}
+
+</code></pre><div class="line-numbers" aria-hidden="true"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br><span class="line-number">35</span><br><span class="line-number">36</span><br><span class="line-number">37</span><br><span class="line-number">38</span><br><span class="line-number">39</span><br><span class="line-number">40</span><br><span class="line-number">41</span><br><span class="line-number">42</span><br><span class="line-number">43</span><br><span class="line-number">44</span><br><span class="line-number">45</span><br><span class="line-number">46</span><br></div></div>`,8))}var l=s(p,[["render",t],["__file","7-\u5237\u65B0\u5F53\u524D\u9875\u9762.html.vue"]]);export{l as default};

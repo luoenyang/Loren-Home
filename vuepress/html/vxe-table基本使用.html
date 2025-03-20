@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <script src="../libs/vue-3.2.4.global.js"></script>
+    <script src="../libs/axios.min.js"></script>
+    <script src="../libs/qs.min.js"></script>
+    <script src="../utils/httpUtil.js"></script>
+
+    <!-- vxe-table -->
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../libs/vxe-table-style.css">
+    <!-- 引入脚本 -->
+    <script src="../libs/xe-utils.js"></script>
+    <script src="../libs/vxe-table.js"></script>
+
+    <!-- element-plus -->
+    <!-- Import style -->
+    <link rel="stylesheet" href="../libs/element-plus.css" />
+    <!-- Import Vue 3 -->
+    <!-- <script src="//unpkg.com/vue@3"></script> -->
+    <!-- Import component library -->
+    <script src="../libs/element-plus.js"></script>
+    <script src="../libs/element-plus-locale-zh-cn.js"></script>
+
+    <style>
+        #app {
+            padding: 20px;
+            width: 1200px;
+            margin: 0 auto;
+        }
+
+        .tbar {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        .fileName {
+            display: inline-block;
+            margin: 0 30px;
+        }
+
+        .tableBox {
+            margin: 20px 0;
+        }
+
+        .progress {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <!-- 进度 -->
+        <div class="progress">
+            <div>
+                <el-progress type="dashboard" :percentage="percentage" :color="colors" />
+            </div>
+            <div style="width: 350px;margin-top:50px;">
+                <el-progress :text-inside="true" :stroke-width="24" :percentage="percentage" :color="colors" />
+            </div>
+            <div>
+                <el-progress type="circle" :percentage="percentage" :color="colors" />
+            </div>
+        </div>
+        <!-- 顶部按钮 -->
+        <div class="tbar">
+            <div>
+                <vxe-button @click="chooseFile1" status="primary">选择映射文件</vxe-button><span
+                    class="fileName">{{file1.name}}</span>
+            </div>
+            <div>
+                <vxe-button @click="chooseFile2" status="primary">选择excel文件</vxe-button><span
+                    class="fileName">{{file2.name}}</span>
+            </div>
+            <div>
+                <vxe-button @click="" status="primary">迁移选中的表</vxe-button>
+                <vxe-button @click="" status="primary">迁移全部表</vxe-button>
+            </div>
+        </div>
+        <!-- 表格 -->
+        <div class="tableBox">
+            <p>字段映射表</p>
+            <vxe-toolbar>
+                <template #buttons>
+                    <vxe-button @click="$refs.xTable.setAllTreeExpand(true)">展开所有</vxe-button>
+                    <vxe-button @click="$refs.xTable.clearTreeExpand()">关闭所有</vxe-button>
+                </template>
+            </vxe-toolbar>
+            <vxe-table ref="xTable" :column-config="{resizable: true}" max-height="500" :tree-config="treeConfig"
+                :data="tableData" :checkbox-config="checkboxConfig" @checkbox-change="selectChangeEvent">
+                <vxe-column type="checkbox" title="表名" tree-node></vxe-column>
+                <vxe-column field="name" title="源表字段"></vxe-column>
+                <vxe-column field="size" title="目标字段"></vxe-column>
+            </vxe-table>
+            <vxe-pager background v-model:current-page="tablePage.currentPage" v-model:page-size="tablePage.pageSize"
+                :total="tablePage.total" @page-change="handlePageChange"
+                :layouts="['PrevJump', 'PrevPage', 'JumpNumber', 'NextPage', 'NextJump', 'Sizes', 'FullJump', 'Total']">
+            </vxe-pager>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    percentage: 0,
+                    colors: [
+                        { color: '#f56c6c', percentage: 20 },
+                        { color: '#e6a23c', percentage: 40 },
+                        { color: '#5cb87a', percentage: 60 },
+                        { color: '#1989fa', percentage: 80 },
+                        { color: '#6f7ad3', percentage: 100 },
+                    ],
+                    file1: { name: '仅支持json文件' },
+                    file2: { name: '仅支持excel文件' },
+                    treeConfig: {
+                        transform: true,
+                        rowField: 'id',
+                        parentField: 'parentId',
+                        lazy: true, hasChild: 'hasChild',
+                        loadMethod: this.loadChildrenMethod
+                    },
+                    checkboxConfig: {
+                        checkField: 'isChecked',// 渲染更快，建议数据量大时使用，行数据中必须存在该字段，否则无效
+                        labelField: 'id',
+                        highlight: true,
+                        // visibleMethod
+                        checkMethod: (row) => {
+                            return !row.row.parentId
+                        }
+                    },
+                    tablePage: {
+                        currentPage: 1,
+                        pageSize: 50,
+                        total: 300,
+                    },
+                    tableData: [
+                        { id: '此节点懒加载', parentId: null, name: '懒加载，配合hasChild+loadChildrenMethod方法', type: 'mp3', size: 1024, date: '2020-08-01', hasChild: true },
+                        { id: 10050, parentId: null, name: 'Test2', type: 'mp4', size: null, date: '2021-04-01' },
+                        { id: 24300, parentId: 10050, name: 'Test3', type: 'avi', size: 1024, date: '2020-03-01' },
+                        { id: 20045, parentId: 24300, name: 'test abc4', type: 'html', size: 600, date: '2021-04-01' },
+                        { id: 10053, parentId: 24300, name: 'test abc96', type: 'avi', size: null, date: '2021-04-01' },
+                        { id: 24330, parentId: 10053, name: 'test abc5', type: 'txt', size: 25, date: '2021-10-01' },
+                        { id: 21011, parentId: 10053, name: 'Test6', type: 'pdf', size: 512, date: '2020-01-01' },
+                        { id: 22200, parentId: 10053, name: 'Test7', type: 'js', size: 1024, date: '2021-06-01' },
+                        { id: 23666, parentId: null, name: 'Test8', type: 'xlsx', size: 2048, date: '2020-11-01' },
+                        { id: 23677, parentId: 23666, name: 'Test7', type: 'js', size: 1024, date: '2021-06-01' },
+                        { id: 23671, parentId: 23677, name: 'Test7', type: 'js', size: 1024, date: '2021-06-01' },
+                        { id: 23672, parentId: 23677, name: 'Test7', type: 'js', size: 1024, date: '2021-06-01' },
+                        { id: 23688, parentId: 23666, name: 'Test7', type: 'js', size: 1024, date: '2021-06-01' },
+                        { id: 23681, parentId: 23688, name: 'Test7', type: 'js', size: 1024, date: '2021-06-01' },
+                        { id: 23682, parentId: 23688, name: 'Test7', type: 'js', size: 1024, date: '2021-06-01' },
+                        { id: 24555, parentId: null, name: 'test abc9', type: 'avi', size: 224, date: '2020-10-01' },
+                        { id: 24566, parentId: 24555, name: 'Test7', type: 'js', size: 1024, date: '2021-06-01' },
+                        { id: 24577, parentId: 24555, name: 'Test7', type: 'js', size: 1024, date: '2021-06-01' }
+                    ]
+                }
+            },
+            mounted() {
+                setInterval(() => {
+                    // 递增10，到100后 又回到10
+                    this.percentage = (this.percentage % 100) + 10
+                }, 500)
+            },
+            methods: {
+                // 选择json文件
+                async chooseFile1() {
+                    try {
+                        const { file } = await VXETable.readFile({ multiple: false });
+                        console.log(file)
+                        if (file.type != 'application/json') {
+                            VXETable.modal.alert('请上传json文件')
+                            return;
+                        }
+                        this.file1 = file;
+                        // VXETable.modal.alert(`文件名：${file.name}，文件大小：${file.size}`)
+                    } catch (e) { }
+                },
+                // 选择excel文件
+                async chooseFile2() {
+                    try {
+                        const { file } = await VXETable.readFile({ multiple: false });
+                        console.log(file)
+                        if (file.type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+                            VXETable.modal.alert('请上传excel文件')
+                            return;
+                        }
+                        this.file2 = file;
+                        // VXETable.modal.alert(`文件名：${file.name}，文件大小：${file.size}`)
+                    } catch (e) { }
+                },
+                // 选中/取消表格复选框
+                selectChangeEvent({ $table }) {
+                    const records = $table.getCheckboxRecords()
+                    console.info(`勾选${records.length}个树形节点`, records)
+                },
+                // 分页信息改变
+                handlePageChange({ currentPage, pageSize }) {
+                    console.log(currentPage)
+                    console.log(pageSize)
+                },
+                // 懒加载/异步加载
+                loadChildrenMethod({ row }) {
+                    console.log(row)
+                    // 异步加载子节点
+                    let getChilds = new Promise(resolve => {
+                        setTimeout(() => {
+                            const childs = [
+                                { id: row.id + 1, parentId: row.id, name: row.name, hasChild: true },
+                                { id: row.id + 2, parentId: row.id, name: row.name, hasChild: false }
+                            ]
+                            resolve(childs)
+                        }, 500)
+                    })
+                    return getChilds;
+                }
+            }
+        }).use(VXETable).use(ElementPlus, {
+            locale: ElementPlusLocaleZhCn,
+        }).mount('#app')
+    </script>
+</body>
+
+</html>

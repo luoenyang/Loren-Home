@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head lang="en">
+    <meta charset="UTF-8" />
+    <title></title>
+    <style>
+      * {
+        text-align: center;
+      }
+      img {
+        display: block;
+        margin: 0 auto;
+      }
+      .aa:hover {
+        opacity: 0.5;
+      }
+      .bb:hover {
+        /*filter: blur(2px);*/
+        /*-moz-filter: blur(2px);*/
+        /*filter: progid:DXImageTransform.Microsoft.Blur(PixelRadius='10');*/
+        /*灰度 */
+        filter: grayscale(1);
+      }
+      .cc:hover {
+        /*褐色*/
+        filter: sepia(1);
+      }
+      .dd:hover {
+        /*饱和度*/
+        filter: saturate(3);
+      }
+      .ee:hover {
+        /*色相旋转*/
+        filter: hue-rotate(90deg);
+      }
+      .ff:hover {
+        /*反色*/
+        filter: invert(1);
+      }
+      .gg:hover {
+        /*透明度*/
+        filter: opacity(0.2);
+      }
+      .ii:hover {
+        /*亮度*/
+        filter: brightness(0.5);
+      }
+      .jj:hover {
+        /*对比度*/
+        filter: contrast(2);
+      }
+      .kk:hover {
+        /*高斯模糊*/
+        filter: blur(3px);
+      }
+      .LL:hover {
+        /*阴影*/
+        filter: drop-shadow(5px 5px 5px #ccc);
+      }
+    </style>
+  </head>
+  <body>
+    <h3>普通透明度</h3>
+    <div>
+      <img class="aa" src="../img/bb.jpg" />
+    </div>
+    <h1>css3 filter 鼠标移上去看效果</h1>
+    <div>
+      <h4>灰度</h4>
+      <img class="bb" src="../img/bb.jpg" />
+      <h4>褐色</h4>
+      <img class="cc" src="../img/bb.jpg" />
+      <h4>饱和度</h4>
+      <img class="dd" src="../img/bb.jpg" />
+      <h4>色相旋转</h4>
+      <img class="ee" src="../img/bb.jpg" />
+      <h4>反色</h4>
+      <img class="ff" src="../img/bb.jpg" />
+      <h4>透明度</h4>
+      <img class="gg" src="../img/bb.jpg" />
+      <h4>亮度</h4>
+      <img class="ii" src="../img/bb.jpg" />
+      <h4>对比度</h4>
+      <img class="jj" src="../img/bb.jpg" />
+      <h4>高斯模糊</h4>
+      <img class="kk" src="../img/bb.jpg" />
+      <h4>阴影</h4>
+      <img class="LL" src="../img/bb.jpg" />
+      <br />
+      <br />
+    </div>
+  </body>
+</html>

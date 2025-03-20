@@ -1,0 +1,1 @@
+const e={key:"v-16e09148",path:"/zh/js-css-h5/js/23-sleep%E5%92%8Cdelay.html",title:"sleep \u548C delay",lang:"zh-CN",frontmatter:{},excerpt:"",headers:[],git:{updatedTime:167818054e4,contributors:[{name:"loren.lou",email:"loren.luo@jiuzhang.net",commits:1}]},filePathRelative:"zh/js-css-h5/js/23-sleep\u548Cdelay.md"};export{e as data};

@@ -1,0 +1,1 @@
+const t={key:"v-395bcd4b",path:"/zh/js-css-h5/http/",title:"http",lang:"zh-CN",frontmatter:{},excerpt:"",headers:[{level:3,title:"http",slug:"http-1",children:[]},{level:3,title:"w3c",slug:"w3c",children:[]}],git:{updatedTime:1729246354e3,contributors:[{name:"loren.lou",email:"loren.luo@jiuzhang.net",commits:2}]},filePathRelative:"zh/js-css-h5/http/README.md"};export{t as data};

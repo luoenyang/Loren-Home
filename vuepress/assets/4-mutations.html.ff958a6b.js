@@ -1,0 +1,1 @@
+const t={key:"v-24564b62",path:"/zh/vue%E7%94%9F%E6%80%81/vuex/4-mutations.html",title:"1. mutation \u975E\u5E38\u7C7B\u4F3C\u4E8E\u4E8B\u4EF6",lang:"zh-CN",frontmatter:{},excerpt:"",headers:[],git:{updatedTime:1649089887e3,contributors:[{name:"721693454@qq.com",email:"abcde199114710",commits:1}]},filePathRelative:"zh/vue\u751F\u6001/vuex/4-mutations.md"};export{t as data};

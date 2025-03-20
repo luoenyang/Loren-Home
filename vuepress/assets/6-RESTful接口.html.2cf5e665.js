@@ -1,0 +1,1 @@
+const e={key:"v-22003b32",path:"/zh/nodejs/6-RESTful%E6%8E%A5%E5%8F%A3.html",title:"REST",lang:"zh-CN",frontmatter:{},excerpt:"",headers:[],git:{updatedTime:1651226823e3,contributors:[{name:"loren.lou",email:"loren.luo@jiuzhang.net",commits:1}]},filePathRelative:"zh/nodejs/6-RESTful\u63A5\u53E3.md"};export{e as data};

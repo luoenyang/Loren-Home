@@ -1,0 +1,1 @@
+const e={key:"v-72f18d9b",path:"/zh/vue%E7%94%9F%E6%80%81/uniapp/",title:"uniapp",lang:"zh-CN",frontmatter:{},excerpt:"",headers:[{level:3,title:"nvue",slug:"nvue",children:[]}],git:{updatedTime:165727987e4,contributors:[{name:"loren.lou",email:"loren.luo@jiuzhang.net",commits:1}]},filePathRelative:"zh/vue\u751F\u6001/uniapp/README.md"};export{e as data};

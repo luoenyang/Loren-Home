@@ -1,0 +1,1 @@
+const e={key:"v-566bf48a",path:"/zh/js-css-h5/js/12-eventsource%E4%B8%8Ewebsocket.html",title:"eventsource \u4E0E websocket",lang:"zh-CN",frontmatter:{},excerpt:"",headers:[],git:{updatedTime:1650442828e3,contributors:[{name:"loren.lou",email:"loren.luo@jiuzhang.net",commits:1}]},filePathRelative:"zh/js-css-h5/js/12-eventsource\u4E0Ewebsocket.md"};export{e as data};

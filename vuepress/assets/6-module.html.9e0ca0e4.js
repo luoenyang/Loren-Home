@@ -1,0 +1,56 @@
+import{_ as s,p as a}from"./app.e6691f45.js";const p={};function e(t,n){return n[0]||(n[0]=a(`<h1 id="_1-module" tabindex="-1"><a class="header-anchor" href="#_1-module" aria-hidden="true">#</a> 1. module</h1><div class="custom-container tip"><p class="custom-container-title">\u5B9A\u4E49</p><p>store \u5BF9\u8C61\u5C31\u6709\u53EF\u80FD\u53D8\u5F97\u76F8\u5F53\u81C3\u80BF\uFF0CVuex \u5141\u8BB8\u6211\u4EEC\u5C06 store \u5206\u5272\u6210\u6A21\u5757\uFF08module\uFF09\uFF0C \u6BCF\u4E2A\u6A21\u5757\u62E5\u6709\u81EA\u5DF1\u7684 state\u3001mutation\u3001action\u3001getter\u3002</p></div><h1 id="_2-\u547D\u540D\u7A7A\u95F4" tabindex="-1"><a class="header-anchor" href="#_2-\u547D\u540D\u7A7A\u95F4" aria-hidden="true">#</a> 2. \u547D\u540D\u7A7A\u95F4</h1><div class="language-javascript ext-js line-numbers-mode"><pre class="language-javascript"><code><span class="token comment">// \u5E0C\u671B\u4F60\u7684\u6A21\u5757\u5177\u6709\u66F4\u9AD8\u7684\u5C01\u88C5\u5EA6\u548C\u590D\u7528\u6027\uFF0C\u4F60\u53EF\u4EE5\u901A\u8FC7\u6DFB\u52A0 namespaced: true \u7684\u65B9\u5F0F\u4F7F\u5176\u6210\u4E3A\u5E26\u547D\u540D\u7A7A\u95F4\u7684\u6A21\u5757\u3002</span>
+<span class="token comment">// \u5F53\u6A21\u5757\u88AB\u6CE8\u518C\u540E\uFF0C\u5B83\u7684\u6240\u6709 getter\u3001action \u53CA mutation \u90FD\u4F1A\u81EA\u52A8\u6839\u636E\u6A21\u5757\u6CE8\u518C\u7684\u8DEF\u5F84\u8C03\u6574\u547D\u540D\u3002</span>
+
+  <span class="token literal-property property">modules</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token literal-property property">account</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token literal-property property">namespaced</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+    <span class="token operator">...</span>
+  <span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br></div></div><h1 id="_3-\u4F7F\u7528" tabindex="-1"><a class="header-anchor" href="#_3-\u4F7F\u7528" aria-hidden="true">#</a> 3. \u4F7F\u7528</h1><div class="language-javascript ext-js line-numbers-mode"><pre class="language-javascript"><code><span class="token literal-property property">computed</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+  <span class="token operator">...</span><span class="token function">mapState</span><span class="token punctuation">(</span><span class="token string">&#39;some/nested/module&#39;</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+    <span class="token function-variable function">a</span><span class="token operator">:</span> <span class="token parameter">state</span> <span class="token operator">=&gt;</span> state<span class="token punctuation">.</span>a<span class="token punctuation">,</span>
+    <span class="token function-variable function">b</span><span class="token operator">:</span> <span class="token parameter">state</span> <span class="token operator">=&gt;</span> state<span class="token punctuation">.</span>b
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token literal-property property">methods</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+  <span class="token operator">...</span><span class="token function">mapActions</span><span class="token punctuation">(</span><span class="token string">&#39;some/nested/module&#39;</span><span class="token punctuation">,</span> <span class="token punctuation">[</span>
+    <span class="token string">&#39;foo&#39;</span><span class="token punctuation">,</span> <span class="token comment">// -&gt; this.foo()</span>
+    <span class="token string">&#39;bar&#39;</span> <span class="token comment">// -&gt; this.bar()</span>
+  <span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// \u6216\u8005</span>
+
+<span class="token comment">// \u4F7F\u7528 createNamespacedHelpers \u521B\u5EFA\u57FA\u4E8E\u67D0\u4E2A\u547D\u540D\u7A7A\u95F4\u8F85\u52A9\u51FD\u6570</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> createNamespacedHelpers <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">&#39;vuex&#39;</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> mapState<span class="token punctuation">,</span> mapActions <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">createNamespacedHelpers</span><span class="token punctuation">(</span><span class="token string">&#39;some/nested/module&#39;</span><span class="token punctuation">)</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">computed</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token comment">// \u5728 \`some/nested/module\` \u4E2D\u67E5\u627E</span>
+    <span class="token operator">...</span><span class="token function">mapState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token function-variable function">a</span><span class="token operator">:</span> <span class="token parameter">state</span> <span class="token operator">=&gt;</span> state<span class="token punctuation">.</span>a<span class="token punctuation">,</span>
+      <span class="token function-variable function">b</span><span class="token operator">:</span> <span class="token parameter">state</span> <span class="token operator">=&gt;</span> state<span class="token punctuation">.</span>b
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">methods</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token comment">// \u5728 \`some/nested/module\` \u4E2D\u67E5\u627E</span>
+    <span class="token operator">...</span><span class="token function">mapActions</span><span class="token punctuation">(</span><span class="token punctuation">[</span>
+      <span class="token string">&#39;foo&#39;</span><span class="token punctuation">,</span>
+      <span class="token string">&#39;bar&#39;</span>
+    <span class="token punctuation">]</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br><span class="line-number">13</span><br><span class="line-number">14</span><br><span class="line-number">15</span><br><span class="line-number">16</span><br><span class="line-number">17</span><br><span class="line-number">18</span><br><span class="line-number">19</span><br><span class="line-number">20</span><br><span class="line-number">21</span><br><span class="line-number">22</span><br><span class="line-number">23</span><br><span class="line-number">24</span><br><span class="line-number">25</span><br><span class="line-number">26</span><br><span class="line-number">27</span><br><span class="line-number">28</span><br><span class="line-number">29</span><br><span class="line-number">30</span><br><span class="line-number">31</span><br><span class="line-number">32</span><br><span class="line-number">33</span><br><span class="line-number">34</span><br></div></div><h1 id="_4-\u52A8\u6001\u6CE8\u518C\u6A21\u5757" tabindex="-1"><a class="header-anchor" href="#_4-\u52A8\u6001\u6CE8\u518C\u6A21\u5757" aria-hidden="true">#</a> 4. \u52A8\u6001\u6CE8\u518C\u6A21\u5757</h1><div class="language-javascript ext-js line-numbers-mode"><pre class="language-javascript"><code><span class="token keyword">import</span> Vuex <span class="token keyword">from</span> <span class="token string">&#39;vuex&#39;</span>
+
+<span class="token keyword">const</span> store <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Vuex<span class="token punctuation">.</span>Store</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token comment">/* \u9009\u9879 */</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token comment">// \u6CE8\u518C\u6A21\u5757 \`myModule\`</span>
+store<span class="token punctuation">.</span><span class="token function">registerModule</span><span class="token punctuation">(</span><span class="token string">&#39;myModule&#39;</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token comment">// \u6CE8\u518C\u5D4C\u5957\u6A21\u5757 \`nested/myModule\`</span>
+store<span class="token punctuation">.</span><span class="token function">registerModule</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">&#39;nested&#39;</span><span class="token punctuation">,</span> <span class="token string">&#39;myModule&#39;</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+  <span class="token comment">// ...</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre><div class="line-numbers" aria-hidden="true"><span class="line-number">1</span><br><span class="line-number">2</span><br><span class="line-number">3</span><br><span class="line-number">4</span><br><span class="line-number">5</span><br><span class="line-number">6</span><br><span class="line-number">7</span><br><span class="line-number">8</span><br><span class="line-number">9</span><br><span class="line-number">10</span><br><span class="line-number">11</span><br><span class="line-number">12</span><br></div></div>`,8))}var c=s(p,[["render",e],["__file","6-module.html.vue"]]);export{c as default};
