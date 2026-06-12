@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title> fMP4 解析器</title>
+</head>
+
+<body>
+    <input type="file" id="fileInput" accept=".mp4">
+    <button onclick="parseAccurateFragments()">精确解析fmp4分片</button>
+    <pre id="result"></pre>
+
+    <script>
+        class AccurateMP4Parser {
+            constructor() {
+                this.dataView = null;
+                this.arrayBuffer = null;
+                this.fragments = [];
+                this.initSegment = null;
+            }
+
+            async parseFile(file) {
+                this.arrayBuffer = await this.readFile(file);
+                this.dataView = new DataView(this.arrayBuffer);
+                this.fragments = [];
+                this.initSegment = null;
+
+                return this.parseMP4Accurate();
+            }
+
+            async readFile(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+
+            parseMP4Accurate() {
+                const fileSize = this.dataView.byteLength;
+                let offset = 0;
+
+                console.log(`开始解析文件，大小: ${fileSize} bytes`);
+
+                // 先解析初始化片段
+                this.parseInitSegment(offset);
+
+                // 查找所有 moof box
+                offset = 0;
+                while (offset < fileSize - 8) {
+                    const boxStart = offset;
+
+                    // 读取 box header
+                    let boxSize = this.dataView.getUint32(offset);
+                    const boxType = this.readString(offset + 4, 4);
+
+                    // 处理扩展大小
+                    if (boxSize === 1) {
+                        // 读取64位扩展大小
+                        const high = this.dataView.getUint32(offset + 8);
+                        const low = this.dataView.getUint32(offset + 12);
+                        boxSize = (BigInt(high) << 32n) | BigInt(low);
+                        offset += 8; // 跳过扩展大小部分
+                    }
+
+                    if (boxSize === 0) {
+                        // 最后一个 box
+                        offset = fileSize;
+                        break;
+                    }
+
+                    // 记录 moof box
+                    if (boxType === 'moof') {
+                        const fragment = this.parseMoofBox(boxStart, Number(boxSize));
+                        if (fragment) {
+                            this.fragments.push(fragment);
+                        }
+                    }
+
+                    offset = boxStart + Number(boxSize);
+                    if (offset >= fileSize) break;
+                }
+
+                // 按偏移量排序
+                this.fragments.sort((a, b) => a.moofOffset - b.moofOffset);
+
+                // 为每个分片添加索引
+                this.fragments.forEach((frag, index) => {
+                    frag.index = index;
+                });
+
+                return {
+                    initSegment: this.initSegment,
+                    fragments: this.fragments,
+                    totalFragments: this.fragments.length
+                };
+            }
+
+            parseInitSegment(offset) {
+                let currentOffset = offset;
+                const boxes = [];
+
+                // 解析直到第一个 moof
+                while (currentOffset < this.dataView.byteLength - 8) {
+                    let boxSize = this.dataView.getUint32(currentOffset);
+                    const boxType = this.readString(currentOffset + 4, 4);
+
+                    if (boxSize === 1) {
+                        // 扩展大小
+                        currentOffset += 16;
+                        continue;
+                    }
+
+                    if (boxSize === 0 || boxType === 'moof') {
+                        break;
+                    }
+
+                    boxes.push({
+                        type: boxType,
+                        offset: currentOffset,
+                        size: boxSize
+                    });
+
+                    currentOffset += boxSize;
+                }
+
+                this.initSegment = {
+                    start: 0,
+                    end: currentOffset - 1,
+                    size: currentOffset,
+                    boxes: boxes
+                };
+
+                console.log('初始化片段信息:', this.initSegment);
+            }
+
+            parseMoofBox(moofOffset, moofSize) {
+                const moofEnd = moofOffset + moofSize;
+
+                // 检查下一个 box 是否是 mdat
+                if (moofEnd + 8 >= this.dataView.byteLength) {
+                    console.warn(`moof 在文件末尾，无法检查 mdat: ${moofOffset}`);
+                    return null;
+                }
+
+                // 读取 mdat box
+                const mdatOffset = moofEnd;
+                let mdatSize = this.dataView.getUint32(mdatOffset);
+                const mdatType = this.readString(mdatOffset + 4, 4);
+
+                if (mdatType !== 'mdat') {
+                    console.warn(`moof 后面不是 mdat: ${mdatType} at ${mdatOffset}`);
+                    return null;
+                }
+
+                // 处理 mdat 扩展大小
+                if (mdatSize === 1) {
+                    const high = this.dataView.getUint32(mdatOffset + 8);
+                    const low = this.dataView.getUint32(mdatOffset + 12);
+                    mdatSize = Number((BigInt(high) << 32n) | BigInt(low));
+                }
+
+                const fragmentEnd = mdatOffset + mdatSize;
+
+                return {
+                    moofOffset: moofOffset,
+                    moofSize: moofSize,
+                    mdatOffset: mdatOffset,
+                    mdatSize: mdatSize,
+                    endOffset: fragmentEnd,
+                    size: fragmentEnd - moofOffset,
+                    byteRange: `${moofOffset}-${fragmentEnd - 1}`
+                };
+            }
+
+            readString(offset, length) {
+                let str = '';
+                for (let i = 0; i < length; i++) {
+                    str += String.fromCharCode(this.dataView.getUint8(offset + i));
+                }
+                return str;
+            }
+
+            // 验证分片数据的完整性
+            validateFragment(fragment) {
+                if (!fragment) return false;
+
+                // 检查偏移量是否在文件范围内
+                if (fragment.endOffset > this.dataView.byteLength) {
+                    console.warn(`分片结束位置超出文件大小: ${fragment.endOffset} > ${this.dataView.byteLength}`);
+                    return false;
+                }
+
+                // 验证 moof 和 mdat 类型
+                const moofType = this.readString(fragment.moofOffset + 4, 4);
+                const mdatType = this.readString(fragment.mdatOffset + 4, 4);
+
+                if (moofType !== 'moof') {
+                    console.warn(`moof 位置不是 moof 类型: ${moofType}`);
+                    return false;
+                }
+
+                if (mdatType !== 'mdat') {
+                    console.warn(`mdat 位置不是 mdat 类型: ${mdatType}`);
+                    return false;
+                }
+
+                return true;
+            }
+
+            // 获取初始化片段的字节范围
+            getInitSegmentRange() {
+                if (this.fragments.length > 0) {
+                    return {
+                        start: 0,
+                        end: this.fragments[0].moofOffset - 1,
+                        size: this.fragments[0].moofOffset
+                    };
+                }
+                return null;
+            }
+        }
+
+        async function parseAccurateFragments() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('请选择文件');
+                return;
+            }
+
+            const parser = new AccurateMP4Parser();
+            try {
+                const startTime = performance.now();
+                const result = await parser.parseFile(file);
+                const endTime = performance.now();
+
+                console.log(`解析耗时: ${(endTime - startTime).toFixed(2)}ms`);
+
+                // 显示结果
+                displayResults(result, file);
+
+                // 生成播放器代码
+                generatePlayerCode(result, file.name);
+
+            } catch (error) {
+                console.error('解析失败：不是fmp4结构', error);
+                document.getElementById('result').textContent = `解析失败：不是fmp4结构: ${error.message}\n${error.stack}`;
+            }
+        }
+
+        function displayResults(result, file) {
+            const output = {
+                filename: file.name,
+                fileSize: file.size,
+                initSegment: result.initSegment,
+                fragmentCount: result.fragments.length,
+                fragments: result.fragments
+            };
+
+            document.getElementById('result').textContent =
+                JSON.stringify(output, null, 2);
+
+            // 在控制台显示统计信息
+            console.log('=== 解析统计 ===');
+            console.log(`文件: ${file.name}`);
+            console.log(`大小: ${file.size.toLocaleString()} bytes`);
+            console.log(`初始化片段: bytes=${result.initSegment.start}-${result.initSegment.end}`);
+            console.log(`分片数量: ${result.fragments.length}`);
+
+            let totalFragSize = 0;
+            result.fragments.forEach((frag, i) => {
+                console.log(`分片 ${i}: ${frag.byteRange} (${frag.size.toLocaleString()} bytes)`);
+                totalFragSize += frag.size;
+            });
+
+            console.log(`分片总大小: ${totalFragSize.toLocaleString()} bytes`);
+            console.log(`初始化片段 + 分片总大小: ${result.initSegment.size + totalFragSize}`);
+
+            // 验证数据完整性
+            validateDataIntegrity(result, file.size);
+        }
+
+        function validateDataIntegrity(result, fileSize) {
+            console.log('\n=== 数据完整性验证 ===');
+
+            // 1. 检查初始化片段
+            if (result.initSegment) {
+                console.log(`初始化片段大小: ${result.initSegment.size} bytes`);
+
+                // 检查初始化片段是否包含 ftyp 和 moov
+                // 这里可以添加更详细的验证
+            }
+
+            // 2. 检查分片连续性
+            let lastEnd = result.initSegment.end + 1;
+            let isContinuous = true;
+
+            result.fragments.forEach((frag, i) => {
+                if (Math.abs(frag.moofOffset - lastEnd) > 1) {
+                    console.warn(`分片 ${i} 不连续: 期望开始 ${lastEnd}, 实际开始 ${frag.moofOffset}`);
+                    isContinuous = false;
+                }
+                lastEnd = frag.endOffset;
+            });
+
+            console.log(`分片连续性: ${isContinuous ? '✅ 良好' : '⚠️ 有问题'}`);
+
+            // 3. 检查是否覆盖整个文件
+            const totalCovered = result.initSegment.size +
+                result.fragments.reduce((sum, frag) => sum + frag.size, 0);
+
+            console.log(`文件总大小: ${fileSize.toLocaleString()} bytes`);
+            console.log(`已解析大小: ${totalCovered.toLocaleString()} bytes`);
+            console.log(`覆盖完整性: ${Math.abs(fileSize - totalCovered) <= 1 ? '✅ 完整' : '⚠️ 不完整'}`);
+        }
+
+        function generatePlayerCode(result, filename) {
+            console.log('\n=== 播放器代码示例 ===');
+
+            // 生成初始化片段 Range
+            console.log(`// 初始化片段`);
+            console.log(`const initRange = { start: ${result.initSegment.start}, end: ${result.initSegment.end} };`);
+            console.log(`// 请求: Range: bytes=${result.initSegment.start}-${result.initSegment.end}`);
+
+            // 生成分片数组
+            console.log(`\n// 分片数组`);
+            console.log(`const fragments = [`);
+            result.fragments.forEach(frag => {
+                console.log(`  { index: ${frag.index}, start: ${frag.moofOffset}, end: ${frag.endOffset - 1} },`);
+            });
+            console.log(`];`);
+
+            // 生成播放器使用示例
+            console.log(`\n// 使用示例`);
+            console.log(`async function loadAndPlay() {`);
+            console.log(`  // 1. 加载初始化片段`);
+            console.log(`  const initResponse = await fetch('${filename}', {`);
+            console.log(`    headers: { 'Range': 'bytes=${result.initSegment.start}-${result.initSegment.end}' }`);
+            console.log(`  });`);
+            console.log(`  const initData = await initResponse.arrayBuffer();`);
+            console.log(``);
+            console.log(`  // 2. 加载第一个分片`);
+            console.log(`  const fragResponse = await fetch('${filename}', {`);
+            console.log(`    headers: { 'Range': 'bytes=${result.fragments[0].moofOffset}-${result.fragments[0].endOffset - 1}' }`);
+            console.log(`  });`);
+            console.log(`  const fragData = await fragResponse.arrayBuffer();`);
+            console.log(`}`);
+        }
+
+        // 自动测试文件（如果已经有文件）
+        window.addEventListener('DOMContentLoaded', () => {
+            // 可以在这里添加示例文件或自动测试逻辑
+        });
+    </script>
+</body>
+
+</html>

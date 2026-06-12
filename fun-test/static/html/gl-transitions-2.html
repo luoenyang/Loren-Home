@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>gl-transitions转场</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 20px;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            overflow: hidden;
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+    <h3><a href="https://gl-transitions.com/gallery">gl-transitions 官网</a></h3>
+    <h2>关键代码和gl-transitions-1基本相同</h2>
+    <h2>使用了gl-transitions的转场效果，并且设置了视频位置和大小</h2>
+    <canvas id="glCanvas" width="270" height="480"></canvas>
+    <script>
+        const createVideo = src => {
+            return new Promise((resolve, reject) => {
+                const video = document.createElement('video');
+                video.src = src;
+                video.preload = 'auto';
+                video.muted = true;
+                video.loop = false;
+                video.crossOrigin = 'anonymous';
+                video.oncanplaythrough = () => resolve(video);
+                video.onerror = reject;
+            });
+        };
+
+        const url1 = '../../video/test2.mp4';
+        const url2 = '../../video/test4.mp4';
+        Promise.all([createVideo(url1), createVideo(url2)]).then(videos => {
+            const canvas = document.getElementById('glCanvas');
+            const gl = canvas.getContext('webgl');
+            if (!gl) {
+                alert('WebGL not supported');
+                return;
+            }
+
+            // 顶点着色器
+            const vertexShaderSource = `
+                attribute vec4 aVertexPosition;
+                attribute vec2 aTextureCoord;
+                varying highp vec2 vTextureCoord;
+                void main(void) {
+                    gl_Position = aVertexPosition;
+                    vTextureCoord = aTextureCoord;
+                }
+            `;
+
+            // 片段着色器
+            const fragmentShaderSource = `
+                precision highp float;
+                varying vec2 vTextureCoord;
+                uniform sampler2D uSampler;
+                uniform sampler2D uSampler2;
+                uniform float uProgress;
+                uniform vec2 uCanvasSize;
+                uniform vec2 uDirection;
+
+                vec4 getFromColor(vec2 uv) {
+                    return texture2D(uSampler, uv);
+                }
+
+                vec4 getToColor(vec2 uv) {
+                    return texture2D(uSampler2, uv);
+                }
+
+
+
+                // 来自：https://gl-transitions.com/transitions/directionalwipe
+                vec4 transition(vec2 uv) {
+                    float angle = atan(uDirection.y, uDirection.x);
+                    vec2 direction = vec2(cos(angle), sin(angle));
+                    float t = uProgress * (1.0 + 0.5);
+                    vec2 resolution = vec2(1.0);
+                    
+                    vec2 v = normalize(direction);
+                    v /= abs(v.x) + abs(v.y);
+                    float d = v.x * uv.x + v.y * uv.y;
+                    float m = (1.0 - t) * (resolution.x + resolution.y);
+
+                    
+                    // 设置位置和大小 ****************
+                    // 计算像素坐标
+                    vec2 fragCoord = vTextureCoord * uCanvasSize;
+                    
+                    // 视频1的显示区域（左上角 135x240）
+                    vec2 video1Pos = vec2(0.0, 0.0);
+                    vec2 video1Size = vec2(135.0, 240.0);
+                    
+                    // 视频2的显示区域（右下角 270x480）
+                    // vec2 video2Pos = uCanvasSize - vec2(30,20);
+                    vec2 video2Pos =  vec2(30,20);
+                    vec2 video2Size = vec2(270.0, 480.0);
+                    
+                    // 计算区域坐标
+                    vec2 coord1 = (fragCoord - video1Pos) / video1Size;
+                    vec2 coord2 = (fragCoord - video2Pos) / video2Size;
+                    
+                    vec4 color1 = vec4(0.0);
+                    vec4 color2 = vec4(0.0);
+                    
+                    // 采样视频1
+                    if (all(greaterThanEqual(fragCoord, video1Pos)) && 
+                        all(lessThan(fragCoord, video1Pos + video1Size))) {
+                        color1 = getFromColor(coord1);
+                    }
+                    
+                    // 采样视频2
+                    if (all(greaterThanEqual(fragCoord, video2Pos)) && 
+                        all(lessThan(fragCoord, video2Pos + video2Size))) {
+                        color2 = getToColor(coord2);
+                    }
+
+                    // *****************************
+
+                    return mix(
+                        // 使用gl-transitions
+                        // getToColor(uv),
+                        // getFromColor(uv),
+
+                        // 使用自定义
+                        color2,color1, 
+                        step(d - 0.005, m)
+                    );
+                }
+
+                void main() {
+                    // 设置位置和大小 ****************
+                    // 计算像素坐标
+                    vec2 fragCoord = vTextureCoord * uCanvasSize;
+                    
+                    // 视频1的显示区域（左上角 135x240）
+                    vec2 video1Pos = vec2(0.0, 0.0);
+                    vec2 video1Size = vec2(135.0, 240.0);
+                    
+                    // 视频2的显示区域（右下角 270x480）
+                    // vec2 video2Pos = uCanvasSize - vec2(30,20);
+                    vec2 video2Pos =  vec2(30,20);
+                    vec2 video2Size = vec2(270.0, 480.0);
+                    
+                    // 计算区域坐标
+                    vec2 coord1 = (fragCoord - video1Pos) / video1Size;
+                    vec2 coord2 = (fragCoord - video2Pos) / video2Size;
+                    
+                    vec4 color1 = vec4(0.0);
+                    vec4 color2 = vec4(0.0);
+                    
+                    // 采样视频1
+                    if (all(greaterThanEqual(fragCoord, video1Pos)) && 
+                        all(lessThan(fragCoord, video1Pos + video1Size))) {
+                        color1 = getFromColor(coord1);
+                    }
+                    
+                    // 采样视频2
+                    if (all(greaterThanEqual(fragCoord, video2Pos)) && 
+                        all(lessThan(fragCoord, video2Pos + video2Size))) {
+                        color2 = getToColor(coord2);
+                    }
+
+                    // *****************************
+                    
+                    // 转场1：混合颜色
+                    // gl_FragColor = mix(color1, color2, uProgress);
+
+                    // 转场2：使用gl-transition的转场
+                    gl_FragColor = transition(vTextureCoord);
+                }
+            `;
+
+            // 编译着色器
+            const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertexShader, vertexShaderSource);
+            gl.compileShader(vertexShader);
+
+            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragmentShader, fragmentShaderSource);
+            gl.compileShader(fragmentShader);
+
+            // 创建程序
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                alert('Unable to initialize the shader program.');
+                return;
+            }
+
+            gl.useProgram(program);
+
+            // 设置顶点数据（全屏）
+            const positions = new Float32Array([
+                -1,  1,
+                -1, -1,
+                 1,  1,
+                 1, -1
+            ]);
+
+            const textureCoords = new Float32Array([
+                0.0, 0.0,
+                0.0, 1.0,
+                1.0, 0.0,
+                1.0, 1.0
+            ]);
+
+            // 初始化缓冲区
+            const initBuffer = (data) => {
+                const buffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+                gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+                return buffer;
+            };
+
+            const positionBuffer = initBuffer(positions);
+            const texCoordBuffer = initBuffer(textureCoords);
+
+            // 设置属性指针
+            const aVertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
+            const aTextureCoord = gl.getAttribLocation(program, 'aTextureCoord');
+            
+            gl.enableVertexAttribArray(aVertexPosition);
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.vertexAttribPointer(aVertexPosition, 2, gl.FLOAT, false, 0, 0);
+
+            gl.enableVertexAttribArray(aTextureCoord);
+            gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+            gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
+
+            // 创建纹理
+            const textures = [gl.createTexture(), gl.createTexture()];
+            textures.forEach((tex, i) => {
+                gl.bindTexture(gl.TEXTURE_2D, tex);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            });
+
+            // 获取uniform位置
+            const uSampler = gl.getUniformLocation(program, 'uSampler');
+            const uSampler2 = gl.getUniformLocation(program, 'uSampler2');
+            const uProgress = gl.getUniformLocation(program, 'uProgress');
+            const uCanvasSize = gl.getUniformLocation(program, 'uCanvasSize');
+
+            // 设置画布尺寸
+            gl.uniform2f(uCanvasSize, canvas.width, canvas.height);
+
+            // 更新纹理函数
+            const updateTexture = (video, texture) => {
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+            };
+
+            // 绘制函数
+            const render = (progress) => {
+                gl.uniform1f(uProgress, progress);
+                
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, textures[0]);
+                gl.uniform1i(uSampler, 0);
+
+                gl.activeTexture(gl.TEXTURE1);
+                gl.bindTexture(gl.TEXTURE_2D, textures[1]);
+                gl.uniform1i(uSampler2, 1);
+
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            };
+
+            // 播放视频
+            videos.forEach(video => video.play());
+
+            // 动画循环
+            let progress = 0;
+            const animate = () => {
+                requestAnimationFrame(animate);
+
+                // 在第一个视频结束前3秒开始转场
+                if (videos[0].currentTime >= videos[0].duration - 3) {
+                    progress = Math.min(1, progress + 0.01);
+                }
+
+                // 更新纹理
+                updateTexture(videos[0], textures[0]);
+                updateTexture(videos[1], textures[1]);
+
+                // 渲染
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                render(progress);
+            };
+
+            animate();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可复用的全局搜索高亮组件</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            min-height: 90vh;
+        }
+
+        /* 搜索工具栏 */
+        .search-toolbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            padding: 8px 0;
+            outline: none;
+            color: #333;
+        }
+
+        .search-box input::placeholder {
+            color: #999;
+        }
+
+        .search-stats {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .match-count {
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .search-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #5a67d8;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #cbd5e0;
+        }
+
+        .btn-danger {
+            background: #fc8181;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #f56565;
+        }
+
+        .icon {
+            font-size: 16px;
+        }
+
+        /* 内容区域 */
+        .content-area {
+            padding: 30px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .content-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .content-area::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .content-area::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+        }
+
+        .subtitle-item {
+            padding: 20px;
+            margin-bottom: 16px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .subtitle-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .subtitle-item.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        }
+
+        .item-index {
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .item-content {
+            font-size: 16px;
+            line-height: 1.8;
+            margin-top: 10px;
+            color: #2d3748;
+        }
+
+        /* 高亮样式 */
+        .search-highlight {
+            background-color: rgba(255, 235, 59, 0.3);
+            border-radius: 3px;
+            padding: 2px 1px;
+            margin: 0 1px;
+            transition: all 0.3s ease;
+        }
+
+        .search-highlight.current-match {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            font-weight: 600;
+            padding: 4px 6px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(255, 165, 0, 0.3);
+            animation: pulse 1.5s infinite;
+            position: relative;
+        }
+
+        .search-highlight.current-match::after {
+            /* content: '↕';
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+            font-weight: bold;
+            font-size: 18px; */
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 2px 8px rgba(255, 165, 0, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 2px 20px rgba(255, 165, 0, 0.6);
+            }
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            color: #4a5568;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        /* 快捷提示 */
+        .shortcut-hints {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #718096;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .shortcut {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .shortcut kbd {
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+            border: 1px solid #cbd5e0;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 8px;
+                margin: 10px;
+            }
+
+            .search-box {
+                flex-direction: column;
+                border-radius: 20px;
+                padding: 15px;
+            }
+
+            .search-controls {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .content-area {
+                padding: 15px;
+            }
+
+            .subtitle-item {
+                padding: 15px;
+            }
+
+            .shortcut-hints {
+                flex-direction: column;
+                gap: 8px;
+                align-items: center;
+            }
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 第二个示例区域 */
+        .example-2 {
+            margin-top: 40px;
+            padding: 30px;
+            background: #f7fafc;
+            border-radius: 12px;
+        }
+
+        .example-2 h3 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .article {
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .article p {
+            margin-bottom: 15px;
+            line-height: 1.7;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app" class="container">
+        <!-- 搜索工具栏 -->
+        <div class="search-toolbar">
+            <div class="search-box">
+                <input ref="searchInput" v-model="searchText" type="text" placeholder="搜索字幕内容... (Ctrl+F)"
+                    @keyup.enter="findNext" @keydown.esc="clearSearch" />
+                <div class="search-stats" v-if="searchText && searcher.totalMatches > 0">
+                    <span class="match-count">
+                        {{ searcher.currentMatchIndex }}/{{ searcher.totalMatches }}
+                    </span>
+                </div>
+                <div class="search-controls">
+                    <button @click="findPrev" class="btn btn-primary"
+                        :disabled="!searchText || searcher.totalMatches <= 1">
+                        <span class="icon">↑</span>
+                        上一个
+                    </button>
+                    <button @click="findNext" class="btn btn-primary"
+                        :disabled="!searchText || searcher.totalMatches <= 1">
+                        <span class="icon">↓</span>
+                        下一个
+                    </button>
+                    <button @click="clearSearch" class="btn btn-danger" v-if="searchText">
+                        <span class="icon">×</span>
+                        清除
+                    </button>
+                </div>
+            </div>
+
+            <div class="shortcut-hints">
+                <div class="shortcut">
+                    <kbd>Ctrl</kbd> + <kbd>F</kbd> 打开搜索
+                </div>
+                <div class="shortcut">
+                    <kbd>F3</kbd> 下一个匹配
+                </div>
+                <div class="shortcut">
+                    <kbd>Shift</kbd> + <kbd>F3</kbd> 上一个匹配
+                </div>
+                <div class="shortcut">
+                    <kbd>Esc</kbd> 清除搜索
+                </div>
+            </div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content-area" ref="contentArea">
+            <!-- 空状态 -->
+            <div v-if="filteredItems.length === 0" class="empty-state">
+                <div class="empty-icon">📝</div>
+                <h3>暂无字幕内容</h3>
+                <p>请添加字幕项目或检查数据源</p>
+            </div>
+
+            <!-- 字幕列表 -->
+            <div v-else>
+                <div v-for="(item, index) in filteredItems" :key="item.id" class="subtitle-item"
+                    :ref="el => setItemRef(el, item.id)">
+                    <div class="item-index">{{ index + 1 }}</div>
+                    <div class="item-content">{{ item.content }}</div>
+                    <div class="item-meta">
+                        <small>ID: {{ item.id }} • 状态: {{ item.isEditting ? '编辑中' : '已发布' }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        const { createApp, ref, computed, watch, onMounted, onUnmounted } = Vue
+
+        // 全局搜索类 - 可以独立使用
+        class GlobalSearcher {
+            constructor(options = {}) {
+                // 配置选项
+                this.options = {
+                    highlightClass: 'search-highlight',
+                    currentMatchClass: 'current-match',
+                    caseSensitive: false,
+                    ...options
+                }
+
+                // 状态
+                this.searchTerm = ''
+                this.matches = []
+                this.currentMatchIndex = 0
+                this.totalMatches = 0
+                this.targetElements = []
+
+                // 原始内容缓存
+                this.originalContents = new Map()
+            }
+
+            /**
+             * 初始化搜索器
+             * @param {HTMLElement|HTMLElement[]|string} target - 目标元素或选择器
+             * @param {Object} options - 配置选项
+             */
+            init(target, options = {}) {
+                this.options = { ...this.options, ...options }
+
+                // 获取目标元素
+                if (typeof target === 'string') {
+                    this.targetElements = Array.from(document.querySelectorAll(target))
+                } else if (Array.isArray(target)) {
+                    this.targetElements = target.filter(el => el instanceof HTMLElement)
+                } else if (target instanceof HTMLElement) {
+                    this.targetElements = [target]
+                } else {
+                    console.error('Invalid target element')
+                    return
+                }
+
+                // 保存原始内容
+                this.saveOriginalContents()
+
+                return this
+            }
+
+            /**
+             * 保存原始内容
+             */
+            saveOriginalContents() {
+                this.originalContents.clear()
+                this.targetElements.forEach((el, index) => {
+                    if (el.textContent) {
+                        this.originalContents.set(el, el.innerHTML)
+                    }
+                })
+            }
+
+            /**
+             * 搜索文本
+             * @param {string} term - 搜索词
+             */
+            search(term) {
+                this.searchTerm = term.trim()
+                this.clearHighlights()
+
+                if (!this.searchTerm) {
+                    this.matches = []
+                    this.currentMatchIndex = 0
+                    this.totalMatches = 0
+                    return
+                }
+
+                this.matches = []
+                const regex = new RegExp(this.escapeRegex(this.searchTerm), this.options.caseSensitive ? 'g' : 'gi')
+
+                this.targetElements.forEach((element, elementIndex) => {
+                    const originalContent = this.originalContents.get(element)
+                    if (!originalContent) return
+
+                    let match
+                    while ((match = regex.exec(originalContent)) !== null) {
+                        this.matches.push({
+                            element,
+                            elementIndex,
+                            matchIndex: match.index,
+                            matchText: match[0],
+                            beforeText: originalContent.substring(0, match.index),
+                            afterText: originalContent.substring(match.index + match[0].length)
+                        })
+                    }
+                })
+
+                this.totalMatches = this.matches.length
+
+                if (this.totalMatches > 0) {
+                    this.currentMatchIndex = 1
+                    this.applyHighlights()
+                    this.scrollToCurrentMatch()
+                }
+            }
+
+            /**
+             * 应用高亮
+             */
+            applyHighlights() {
+                // 清除所有高亮
+                this.clearHighlights()
+
+                // 为所有匹配项添加高亮
+                this.matches.forEach((match, index) => {
+                    const isCurrent = (index + 1) === this.currentMatchIndex
+                    const highlightSpan = `<span class="${this.options.highlightClass} ${isCurrent ? this.options.currentMatchClass : ''}">${match.matchText}</span>`
+
+                    const newContent = match.beforeText + highlightSpan + match.afterText
+                    match.element.innerHTML = newContent
+                })
+            }
+
+            /**
+             * 清除所有高亮
+             */
+            clearHighlights() {
+                this.targetElements.forEach(element => {
+                    const originalContent = this.originalContents.get(element)
+                    if (originalContent) {
+                        element.innerHTML = originalContent
+                    }
+                })
+            }
+
+            /**
+             * 跳转到下一个匹配项
+             */
+            next() {
+                if (this.totalMatches === 0) return
+
+                this.currentMatchIndex = this.currentMatchIndex < this.totalMatches
+                    ? this.currentMatchIndex + 1
+                    : 1
+
+                this.applyHighlights()
+                this.scrollToCurrentMatch()
+            }
+
+            /**
+             * 跳转到上一个匹配项
+             */
+            prev() {
+                if (this.totalMatches === 0) return
+
+                this.currentMatchIndex = this.currentMatchIndex > 1
+                    ? this.currentMatchIndex - 1
+                    : this.totalMatches
+
+                this.applyHighlights()
+                this.scrollToCurrentMatch()
+            }
+
+            /**
+             * 滚动到当前匹配项
+             */
+            scrollToCurrentMatch() {
+                if (this.currentMatchIndex === 0 || this.matches.length === 0) return
+
+                const match = this.matches[this.currentMatchIndex - 1]
+                if (match && match.element) {
+                    match.element.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    })
+                }
+            }
+
+            /**
+             * 清除搜索
+             */
+            clear() {
+                this.searchTerm = ''
+                this.clearHighlights()
+                this.matches = []
+                this.currentMatchIndex = 0
+                this.totalMatches = 0
+            }
+
+            /**
+             * 转义正则表达式特殊字符
+             */
+            escapeRegex(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            }
+
+            /**
+             * 销毁搜索器
+             */
+            destroy() {
+                this.clear()
+                this.originalContents.clear()
+                this.targetElements = []
+            }
+        }
+
+        // Vue应用
+        createApp({
+            setup() {
+                // 数据
+                const searchText = ref('')
+                const searchInput = ref(null)
+                const contentArea = ref(null)
+                const articleContent1 = ref(null)
+                const articleContent2 = ref(null)
+
+                // 搜索器实例
+                const searcher = ref(null)
+                const articleSearcher = ref(null)
+
+                // 标签页状态
+                const activeTab = ref('tab1')
+
+                // 模拟数据
+                const subTitleList = ref([
+                    { id: 1, content: 'Vue.js 是一个渐进式JavaScript框架，用于构建用户界面。', isEditting: false },
+                    { id: 2, content: '与其它大型框架不同的是，Vue 被设计为可以自底向上逐层应用。', isEditting: false },
+                    { id: 3, content: 'Vue 的核心库只关注视图层，不仅易于上手，还便于与第三方库或既有项目整合。', isEditting: true },
+                    { id: 4, content: '当与现代化的工具链以及各种支持类库结合使用时，Vue 也完全能够为复杂的单页应用提供驱动。', isEditting: false },
+                    { id: 5, content: 'Vue 采用响应式数据绑定系统，使得数据与DOM保持同步，开发体验更加流畅。', isEditting: false },
+                    { id: 6, content: '组件化是 Vue 的另一个重要特性，允许开发者将UI拆分为独立可复用的组件。', isEditting: false },
+                    { id: 7, content: '每个Vue组件都是一个Vue实例，拥有自己的数据、计算属性、方法和生命周期钩子。', isEditting: false },
+                    { id: 8, content: 'Vue Router 是Vue.js官方的路由管理器，它和Vue.js的核心深度集成，让构建单页面应用变得易如反掌。', isEditting: false },
+                    { id: 9, content: 'Vuex 是一个专为Vue.js应用程序开发的状态管理模式，采用集中式存储管理应用的所有组件的状态。', isEditting: false },
+                    { id: 10, content: 'Vue 3引入了Composition API，提供了更好的TypeScript支持和更灵活的逻辑复用方式。', isEditting: false }
+                ])
+
+                // 过滤非编辑状态的项
+                const filteredItems = computed(() => {
+                    return subTitleList.value.filter(item => !item.isEditting)
+                })
+
+                // 设置项目引用
+                const setItemRef = (el, id) => {
+                    if (el) {
+                        // 在元素上存储ID以便后续使用
+                        el.dataset.itemId = id
+                    }
+                }
+
+                // 查找下一个匹配项
+                const findNext = () => {
+                    if (searchText.value && searcher.value) {
+                        searcher.value.next()
+                    }
+                }
+
+                // 查找上一个匹配项
+                const findPrev = () => {
+                    if (searchText.value && searcher.value) {
+                        searcher.value.prev()
+                    }
+                }
+
+                // 清除搜索
+                const clearSearch = () => {
+                    searchText.value = ''
+                    if (searcher.value) {
+                        searcher.value.clear()
+                    }
+                    searchInput.value?.focus()
+                }
+
+                // 切换标签页时重新初始化搜索
+                const handleTabChange = () => {
+                    if (articleSearcher.value) {
+                        articleSearcher.value.destroy()
+                    }
+                }
+
+                // 初始化字幕搜索器
+                const initializeSubtitleSearcher = () => {
+                    const subtitleElements = Array.from(contentArea.value.querySelectorAll('.item-content'))
+                    searcher.value = new GlobalSearcher({
+                        highlightClass: 'search-highlight',
+                        currentMatchClass: 'current-match',
+                        caseSensitive: false
+                    }).init(subtitleElements)
+                }
+
+
+                // 全局搜索函数
+                const performGlobalSearch = () => {
+                    const term = searchText.value.trim()
+
+                    // 在主内容区域搜索
+                    if (searcher.value) {
+                        searcher.value.search(term)
+                    }
+                }
+
+                // 快捷键支持
+                const handleKeydown =async (e) => {
+                    // Ctrl+F 聚焦搜索框
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                        e.preventDefault()
+                        searchInput.value?.focus()
+                        searchInput.value?.select()
+                        searchInput.value.value= await navigator.clipboard.readText(); 
+                        searchText.value= searchInput.value.value;
+                        performGlobalSearch();
+                    }
+
+                    // F3 继续搜索
+                    if (e.key === 'F3' && searchText.value) {
+                        e.preventDefault()
+                        if (e.shiftKey) {
+                            findPrev()
+                        } else {
+                            findNext()
+                        }
+                    }
+
+                    // ESC 清除搜索
+                    if (e.key === 'Escape' && searchText.value) {
+                        clearSearch()
+                    }
+                }
+
+                // 监听搜索文本变化
+                watch(searchText, (newVal) => {
+                    performGlobalSearch()
+                })
+
+                // 监听标签页变化
+                watch(activeTab, () => {
+                    handleTabChange()
+                })
+
+                // 生命周期
+                onMounted(() => {
+                    window.addEventListener('keydown', handleKeydown)
+
+                    // 初始化搜索器
+                    setTimeout(() => {
+                        initializeSubtitleSearcher()
+                    }, 100)
+                })
+
+                onUnmounted(() => {
+                    window.removeEventListener('keydown', handleKeydown)
+
+                    if (searcher.value) {
+                        searcher.value.destroy()
+                    }
+                    if (articleSearcher.value) {
+                        articleSearcher.value.destroy()
+                    }
+                })
+
+                return {
+                    searchText,
+                    searchInput,
+                    contentArea,
+                    articleContent1,
+                    articleContent2,
+                    subTitleList,
+                    filteredItems,
+                    searcher,
+                    articleSearcher,
+                    activeTab,
+                    setItemRef,
+                    findNext,
+                    findPrev,
+                    clearSearch,
+                    handleTabChange
+                }
+            }
+        }).mount('#app')
+
+        // 独立使用示例
+        // 你可以这样使用 GlobalSearcher 类：
+        /*
+        // 1. 创建搜索器实例
+        const searcher = new GlobalSearcher({
+            highlightClass: 'custom-highlight',
+            currentMatchClass: 'current',
+            caseSensitive: false
+        })
+
+        // 2. 初始化目标元素
+        searcher.init('#content .text-element')
+
+        // 3. 执行搜索
+        searcher.search('Vue')
+
+        // 4. 导航匹配项
+        searcher.next()
+        searcher.prev()
+
+        // 5. 清除搜索
+        searcher.clear()
+
+        // 6. 销毁
+        searcher.destroy()
+        */
+    </script>
+</body>
+
+</html>

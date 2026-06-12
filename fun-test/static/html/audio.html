@@ -1,0 +1,447 @@
+
+<!-- 音频速度变化、波形图 的解决方案：使用wavesurfer.js-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音频处理示例</title>
+    <script src="https://unpkg.com/wavesurfer.js"></script>
+    <style>
+        *{
+            font-family: "楷体";
+        }
+    </style>
+</head>
+<body>
+    <div style="margin:0 auto;width:65%;">
+        <h2>一. 音频速度变化、波形图 的解决方案：使用wavesurfer.js,可以选择视频也可以选择音频</h2>
+        <h2>二. 缺点：使用backend:'WebAudio'的方式，音量可以大于1，但变速后音调会变（webav采取的方式，音量小于1速度不等于1也会变调）</h2>
+        <h2>三. 缺点：使用backend:'MediaElement'的方式，音量最大是1（原声），变速后音调不变（audio的标签是这样的机制，不变调，但音量不能大于1）</h2>
+        <h3>速度、音量大于1不变调 的解决方案：</h3>
+        <h4>1. 采用ffmpeg进行预处理，把音量调高生成一个临时文件再处理： ffmpeg -i 说话声音.mp3 -af "volume=10" bigVolume.mp3</h4>
+        <h4>2. 使用video标签且音频分离，this.audioContext = new (window.AudioContext || window.webkitAudioContext)();的方式播放</h4>
+        <h4>3. 使用 import { SoundTouchNode } from "soundtouchjs"; 进行播放 效果类似2;详见mediabunny.vue</h4>
+
+
+        <input type="file" id="fileInput" accept="*" style="margin:50px 0 0 0">
+        音量<input type="range" id="volume" min="0" max="5" value="1" step="0.01">
+        播放速度<input type="range" id="speed" min="0.5" max="10" value="1" step="0.01">
+        开始时间<input type="number" id="startTime" min="0" value="0" step="0.01">秒
+        <button id="playButton">播放</button>
+        <div id="waveform" style="margin-top:50px"></div>
+    </div>
+
+
+    <script>
+        const wavesurfer = WaveSurfer.create({
+            container: '#waveform',
+            backend:'MediaElement', // 不可以调高音量大于1，但变速时不会变调
+            // backend: 'WebAudio',// 可以调高音量大于1，但变速时会变调
+            waveColor: 'red',  // 波形图颜色
+            progressColor: 'blue', // 播放进度条颜色
+            width:900, // 0 不显示波形图
+            height:50 // 0 不显示波形图
+        });
+        wavesurfer.on('ready',()=>{
+            console.log('wavesurfer',wavesurfer)
+        })
+
+
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect, false);
+        document.getElementById('volume').addEventListener('input', handleVolumeChange, false);
+        document.getElementById('speed').addEventListener('input', handleSpeedChange, false);
+        document.getElementById('playButton').addEventListener('click', handlePlayButton, false);
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const arrayBuffer = e.target.result;
+                    wavesurfer.loadBlob(new Blob([arrayBuffer], { type: 'audio/wav' }));
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let source;
+        function handleVolumeChange(event) {
+            wavesurfer.setVolume(event.target.value); // backend:'MediaElement' 的方式不能设置音量超过1
+
+
+            // ********方式1 以下有噪音，而且变速后音调也变了 ********
+            
+            // 暂停wavesurfer的播放，使用新的播放
+            // wavesurfer.pause();
+            // // 清理之前的连接
+            // if (source) {
+            //     source.disconnect();
+            //     source.stop();
+            // }
+            // source = audioContext.createBufferSource();
+            // source.buffer = wavesurfer.getDecodedData();
+            // const gainNode = audioContext.createGain();
+            // gainNode.gain.value = event.target.value; // 设置音量大于 1
+            // // 连接节点
+            // source.connect(gainNode);
+            // gainNode.connect(audioContext.destination);
+            // // 设置播放速度
+            // source.playbackRate.value = 3; // 这种方式变速后也变调了
+            // // 播放音频
+            // source.start();
+            
+
+
+
+            // ********方式2 报错 ********
+            // 清理之前的连接
+            // if (source) {
+            //     source.disconnect();
+            // }
+            // wavesurfer.pause();
+            // const audioElement= wavesurfer.getMediaElement();
+            // audioElement.pause();
+            //  // 创建 AudioContext
+            // const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // // 创建新的 MediaElementSourceNode
+            // source = audioContext.createMediaElementSource(audioElement);
+            // const gainNode = audioContext.createGain();
+            // gainNode.gain.value = 2; // 设置音量大于 1
+            // // 连接节点
+            // source.connect(gainNode);
+            // gainNode.connect(audioContext.destination);
+            // // 播放音频
+            // audioElement.play();
+        }
+
+        function handleSpeedChange(event) {
+            wavesurfer.setPlaybackRate(parseFloat(event.target.value));
+        }
+
+        function handlePlayButton() {
+            const startTime = parseFloat(document.getElementById('startTime').value);
+            if (wavesurfer.isPlaying()) {
+                wavesurfer.pause();
+            } else {
+                wavesurfer.setTime(startTime); // 从指定时间开始播放
+                wavesurfer.play(); 
+            }
+        }
+    </script>
+</body>
+</html>
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音频处理示例</title>
+    <script src="https://cdn.jsdelivr.net/npm/ola-ts@1.0.0/dist/ola-ts.min.js"></script>
+</head>
+<body>
+    <input type="file" id="fileInput" accept="audio/*">
+    音量<input type="range" id="volume" min="0" max="2" value="1" step="0.01">
+    <script>
+        const audioContext = new AudioContext();
+        const gainNode = audioContext.createGain();
+        gainNode.connect(audioContext.destination);
+
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect, false);
+        document.getElementById('volume').addEventListener('input', handleVolumeChange, false);
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const arrayBuffer = e.target.result;
+                    audioContext.decodeAudioData(arrayBuffer, function(audioBuffer) {
+                        processAudioBuffer(audioBuffer, 2); // 2 倍速
+                    }, function(error) {
+                        console.error('解码音频数据失败：', error);
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function handleVolumeChange(event) {
+            gainNode.gain.value = event.target.value;
+        }
+
+        function processAudioBuffer(audioBuffer, rate) {
+            const newAudioBuffer = wsola(audioContext, audioBuffer, 1 / rate, {
+                frameSize: 4096,
+                overlap: 1024
+            });
+
+            const source = audioContext.createBufferSource();
+            source.buffer = newAudioBuffer;
+            source.connect(gainNode);
+            source.start(0);
+            setTimeout(()=>{
+               source.stop();
+            },1000)
+
+             setTimeout(()=>{
+                const source = audioContext.createBufferSource();
+                source.buffer = newAudioBuffer;
+                source.connect(gainNode);
+                // 开始播放，从第N秒开始
+                source.start(audioContext.currentTime , 3);
+            },2000)
+        }
+
+        function wsola(ac, input, scale, options) {
+            const opts = options || {};
+            const frameSize = opts.frameSize || 4096;
+            const overlap = opts.overlap || 1024;
+            const hopSize = Math.round(frameSize * (1 - overlap / frameSize) / scale);
+            const numSamples = input.length;
+            const output = ac.createBuffer(1, Math.ceil(numSamples * scale), input.sampleRate);
+            const inL = input.getChannelData(0);
+            const outL = output.getChannelData(0);
+            let read = 0;
+            let write = 0;
+
+            while (numSamples - read > frameSize) {
+                const frame = inL.slice(read, read + frameSize);
+                const bestShift = findBestShift(frame, overlap);
+                for (let i = 0; i < frameSize - overlap; i++) {
+                    outL[write + i] = frame[i + bestShift];
+                }
+                read += hopSize;
+                write += frameSize - overlap;
+            }
+            return output;
+        }
+
+        function findBestShift(frame, overlap) {
+            let bestShift = 0;
+            let minError = Infinity;
+            for (let shift = 0; shift < overlap; shift++) {
+                let error = 0;
+                for (let i = 0; i < overlap; i++) {
+                    error += Math.abs(frame[i + shift] - frame[i]);
+                }
+                if (error < minError) {
+                    minError = error;
+                    bestShift = shift;
+                }
+            }
+            return bestShift;
+        }
+    </script>
+</body>
+</html> -->
+
+<!-- ========================================================================================= -->
+
+<!-- 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音频处理示例</title>
+    <script src="https://cdn.jsdelivr.net/npm/ola-ts@1.0.0/dist/ola-ts.min.js"></script>
+</head>
+<body>
+    <input type="file" id="fileInput" accept="audio/*">
+    <input type="range" id="volume" min="0" max="2" value="1" step="0.01">
+    <script>
+        const audioContext = new AudioContext();
+        const gainNode = audioContext.createGain();
+        gainNode.connect(audioContext.destination);
+
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect, false);
+        document.getElementById('volume').addEventListener('input', handleVolumeChange, false);
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const arrayBuffer = e.target.result;
+                    audioContext.decodeAudioData(arrayBuffer, function(audioBuffer) {
+                        processAudioBuffer(audioBuffer, 2); // 2 倍速
+                    }, function(error) {
+                        console.error('解码音频数据失败：', error);
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function handleVolumeChange(event) {
+            gainNode.gain.value = event.target.value;
+        }
+
+        function processAudioBuffer(audioBuffer, rate) {
+            const newAudioBuffer = wsola(audioContext, audioBuffer, 1 / rate, {
+                frameSize: 4096,
+                overlap: 1024
+            });
+
+            const source = audioContext.createBufferSource();
+            source.buffer = newAudioBuffer;
+            source.connect(gainNode);
+            source.start(0);
+        }
+
+        function wsola(ac, input, scale, options) {
+            const opts = options || {};
+            const frameSize = opts.frameSize || 4096;
+            const overlap = opts.overlap || 1024;
+            const hopSize = Math.round(frameSize * (1 - overlap / frameSize) / scale);
+            const numSamples = input.length;
+            const output = ac.createBuffer(1, Math.ceil(numSamples * scale), input.sampleRate);
+            const inL = input.getChannelData(0);
+            const outL = output.getChannelData(0);
+            let read = 0;
+            let write = 0;
+
+            while (numSamples - read > frameSize) {
+                const frame = inL.slice(read, read + frameSize);
+                const bestShift = findBestShift(frame, overlap);
+                for (let i = 0; i < frameSize - overlap; i++) {
+                    outL[write + i] = frame[i + bestShift];
+                }
+                read += hopSize;
+                write += frameSize - overlap;
+            }
+            return output;
+        }
+
+        function findBestShift(frame, overlap) {
+            let bestShift = 0;
+            let minError = Infinity;
+            for (let shift = 0; shift < overlap; shift++) {
+                let error = 0;
+                for (let i = 0; i < overlap; i++) {
+                    error += Math.abs(frame[i + shift] - frame[i]);
+                }
+                if (error < minError) {
+                    minError = error;
+                    bestShift = shift;
+                }
+            }
+            return bestShift;
+        }
+    </script>
+</body>
+</html> -->
+
+<!-- ======================================================================= -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音频处理示例</title>
+</head>
+<body>
+    <input type="file" id="fileInput" accept="audio/*">
+    <input type="range" id="volume" min="0" max="2" value="1" step="0.01">
+    <input type="range" id="highCut" min="0" max="1" value="0.5" step="0.01">
+    <script>
+        const audioContext = new AudioContext();
+        const gainNode = audioContext.createGain();
+        const highPassFilter = audioContext.createBiquadFilter();
+        highPassFilter.type = 'highpass';
+        highPassFilter.frequency.value = 1000; // 初始高音截止频率
+        highPassFilter.Q.value = 1;
+
+        gainNode.connect(highPassFilter);
+        highPassFilter.connect(audioContext.destination);
+
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect, false);
+        document.getElementById('volume').addEventListener('input', handleVolumeChange, false);
+        document.getElementById('highCut').addEventListener('input', handleHighCutChange, false);
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const arrayBuffer = e.target.result;
+                    audioContext.decodeAudioData(arrayBuffer, function(audioBuffer) {
+                        processAudioBuffer(audioBuffer, 2); // 2 倍速
+                    }, function(error) {
+                        console.error('解码音频数据失败：', error);
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function handleVolumeChange(event) {
+            gainNode.gain.value = event.target.value;
+        }
+
+        function handleHighCutChange(event) {
+            highPassFilter.frequency.value = 1000 * (1 - event.target.value);
+        }
+
+        function processAudioBuffer(audioBuffer, rate) {
+            const newAudioBuffer = wsola(audioContext, audioBuffer, 1 / rate, {
+                frameSize: 4096,
+                overlap: 1024
+            });
+
+            const source = audioContext.createBufferSource();
+            source.buffer = newAudioBuffer;
+            source.connect(gainNode);
+            source.start(0);
+        }
+
+        function wsola(ac, input, scale, options) {
+            const opts = options || {};
+            const frameSize = opts.frameSize || 4096;
+            const overlap = opts.overlap || 1024;
+            const hopSize = Math.round(frameSize * (1 - overlap / frameSize) / scale);
+            const numSamples = input.length;
+            const output = ac.createBuffer(1, Math.ceil(numSamples * scale), input.sampleRate);
+            const inL = input.getChannelData(0);
+            const outL = output.getChannelData(0);
+            let read = 0;
+            let write = 0;
+
+            while (numSamples - read > frameSize) {
+                const frame = inL.slice(read, read + frameSize);
+                const bestShift = findBestShift(frame, overlap);
+                for (let i = 0; i < frameSize - overlap; i++) {
+                    outL[write + i] = frame[i + bestShift];
+                }
+                read += hopSize;
+                write += frameSize - overlap;
+            }
+            return output;
+        }
+
+        function findBestShift(frame, overlap) {
+            let bestShift = 0;
+            let minError = Infinity;
+            for (let shift = 0; shift < overlap; shift++) {
+                let error = 0;
+                for (let i = 0; i < overlap; i++) {
+                    error += Math.abs(frame[i + shift] - frame[i]);
+                }
+                if (error < minError) {
+                    minError = error;
+                    bestShift = shift;
+                }
+            }
+            return bestShift;
+        }
+    </script>
+</body>
+</html> -->
+
+
+<!-- ===================================================================== -->
+

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="../js/zrender.min.js"></script>
+    <title>zrender</title>
+    <style>
+        html,
+        body,
+        .example-container {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            position: relative;
+        }
+
+        .example-container div {
+            height: 100% !important;
+            width: 100% !important;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="example-container" style="background: #333"></div>
+</body>
+<script>
+    window.onload = function () {
+        var container = document.getElementsByClassName("example-container")[0];
+        var zr = zrender.init(container);
+
+        var w = zr.getWidth();
+        var h = zr.getHeight();
+
+        var t1 = new zrender.Text({
+            style: {
+                text: "LUOENYANG",
+                textAlign: "center",
+                textVerticalAlign: "middle",
+                fontSize: w / 9.5,
+                fontFamily: "Lato",
+                fontWeight: "bolder",
+                // textFill: '#0ff',
+                fill: "#f0f",
+                blend: "lighten",
+            },
+            position: [w / 6 + 5, h / 3],
+        });
+        zr.add(t1);
+
+        var t2 = new zrender.Text({
+            style: {
+                text: "LUOENYANG",
+                textAlign: "center",
+                textVerticalAlign: "middle",
+                fontSize: w / 9.5,
+                fontFamily: "Lato",
+                fontWeight: "bolder",
+                // textFill: '#f0f',
+                fill: "#fff",
+                blend: "lighten",
+            },
+            position: [w / 6, h / 3],
+        });
+        zr.add(t2);
+
+        var lines = [];
+        for (var i = 0; i < 16; ++i) {
+            var line = new zrender.Rect({
+                shape: {
+                    x: w * (Math.random() - 0.3),
+                    y: h * Math.random(),
+                    width: w * (Math.random() + 0.3),
+                    height: Math.random() * 8,
+                },
+                style: {
+                    fill: ["#ff0", "#f0f", "#0ff", "#00f"][
+                        Math.floor(Math.random() * 4)
+                    ],
+                    blend: "lighten",
+                    opacity: 0,
+                },
+            });
+            zr.add(line);
+            lines.push(line);
+        }
+
+        setInterval(function () {
+            if (Math.random() > 0.2) {
+                t2.attr("position", [w / 6 + Math.random() * 20, h / 3]);
+
+                for (var i = 0; i < lines.length; ++i) {
+                    lines[i].attr("shape", {
+                        x: w * Math.random(),
+                        y: h * Math.random(),
+                        width: w * Math.random(),
+                        height: Math.random() * 8,
+                    });
+                    lines[i].attr("style", {
+                        opacity: 1,
+                    });
+                }
+
+                setTimeout(function () {
+                    t2.attr("position", [w / 6, h / 3]);
+
+                    for (var i = 0; i < lines.length; ++i) {
+                        lines[i].attr("style", {
+                            opacity: 0,
+                        });
+                    }
+                }, 100);
+            }
+        }, 500);
+    };
+</script>
+
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简易计算器</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .calculator {
+            display: inline-block;
+            margin-top: 20px;
+            display: none; /* Initially hide the calculator */
+        }
+        .calculator input, .calculator button {
+            font-size: 20px;
+            padding: 10px;
+            margin: 5px;
+            width: 50px;
+            height: 50px;
+        }
+        .calculator input {
+            width: 210px;
+        }
+        .row {
+            display: flex;
+            justify-content: center;
+        }
+        /* 调整确认和删除按钮字体大小 */
+        #confirm, #delete {
+            font-size: 16px;  /* 将字体大小调整为更合适的大小 */
+        }
+    </style>
+</head>
+<body>
+    <input type="text" id="inputField" placeholder="点击此处启动计算器" />
+    <div class="calculator">
+        <input type="text" id="display" disabled>
+        <br>
+        <div class="row">
+            <button class="button" id="confirm">RET</button>
+            <button class="button" id="clear">C</button>
+            <button class="button" id="delete">←</button>
+            <button class="button" data-value="/">/</button>
+        </div>
+        <div class="row">
+            <button class="button" data-value="7">7</button>
+            <button class="button" data-value="8">8</button>
+            <button class="button" data-value="9">9</button>
+            <button class="button" data-value="*">*</button>
+        </div>
+        <div class="row">
+            <button class="button" data-value="4">4</button>
+            <button class="button" data-value="5">5</button>
+            <button class="button" data-value="6">6</button>
+            <button class="button" data-value="-">-</button>
+        </div>
+        <div class="row">
+            <button class="button" data-value="1">1</button>
+            <button class="button" data-value="2">2</button>
+            <button class="button" data-value="3">3</button>
+            <button class="button" data-value="+">+</button>
+        </div>
+        <div class="row">
+            <button class="button" id="toggle-sign">±</button>
+            <button class="button" data-value="0">0</button>
+            <button class="button" id="decimal">.</button>
+            <button class="button" id="equal">=</button>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            let currentInput = '';
+            let resultDisplayed = false;
+            let lastOperator = null;
+
+            // When the input field is clicked, show the calculator
+            $('#inputField').click(function() {
+                currentInput = '';
+                resultDisplayed = false;
+                lastOperator = null;
+                $('.calculator').show();
+                $('#display').val('');
+            });
+
+            // Handle button clicks on the calculator
+            $('.button').click(function() {
+                let buttonValue = $(this).data('value') || $(this).text();
+                $(this).blur();  // Remove focus from button
+
+                if (buttonValue === 'C') {
+                    // Clear display
+                    currentInput = '';
+                    resultDisplayed = false;
+                    lastOperator = null;
+                    $('#display').val('');
+                } else if (buttonValue === '=') {
+                    // Evaluate the result
+                    try {
+                        currentInput = eval(currentInput).toString();
+                        $('#display').val(currentInput);
+                        resultDisplayed = true;
+                        lastOperator = null;
+                    } catch (e) {
+                        // $('#display').val('错误');
+                    }
+                } else if (buttonValue === '±') {
+                    // Toggle sign
+                    if (currentInput.charAt(0) === '-') {
+                        currentInput = currentInput.substring(1);
+                    } else {
+                        currentInput = '-' + currentInput;
+                    }
+                    $('#display').val(currentInput);
+                } else if (buttonValue === '.') {
+                    // Handle decimal input
+                    let lastNumber = currentInput.split(/[\+\-\*\/]/).pop();
+                    if (!lastNumber.includes('.')) {
+                        currentInput += buttonValue;
+                        $('#display').val(currentInput);
+                    }
+                } else if (buttonValue === '←') {
+                    // Handle backspace
+                    currentInput = currentInput.slice(0, -1);
+                    if (currentInput === '') {
+                        resultDisplayed = false;
+                    }
+                    $('#display').val(currentInput);
+                } else if (buttonValue === 'RET') {
+                    // Return result to input field and hide calculator
+                    $('#inputField').val(currentInput);
+                    $('.calculator').hide();
+                } else {
+                    // Handle number and operator input
+                    if (resultDisplayed) {
+                        currentInput = '' + buttonValue;
+                        resultDisplayed = false;
+                    } else {
+                        if (['+', '-', '*', '/'].includes(buttonValue)) {
+                            // Avoid consecutive operators
+                            if (lastOperator && ['+', '-', '*', '/'].includes(lastOperator)) {
+                                currentInput = currentInput.slice(0, -1);
+                            }
+                            currentInput += buttonValue;
+                        } else {
+                            currentInput += buttonValue;
+                        }
+                    }
+                    $('#display').val(currentInput);
+                    lastOperator = buttonValue;
+                }
+            });
+
+            // Keyboard input handling
+            $(document).keydown(function(event) {
+                if (event.key === "Escape") {
+                    // Close the calculator when ESC is pressed
+                    $('.calculator').hide();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

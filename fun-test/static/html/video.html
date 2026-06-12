@@ -1,0 +1,45 @@
+<!--获取视频宽高 mp4box.all.js -->
+
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>获取视频宽高等信息 mp4box.all.js</h2>
+</body>
+<script src="https://unpkg.com/mp4box@0.5.2/dist/mp4box.all.js"></script>
+<!-- 以下不行 -->
+<!-- <script src="https://unpkg.com/ffprobe-wasm@0.3.1/ffprobe-wasm.js"></script> -->
+<script>
+    async function getVideoInfo(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const mp4box = MP4Box.createFile();
+
+        mp4box.onReady = (info) => {
+            console.log('视频信息:', info);
+
+            const videoTrack = info.videoTracks[0];
+            if (videoTrack) {
+                alert("视频宽高时长大小："+videoTrack.track_width+","+videoTrack.track_height+","+videoTrack.duration+"毫秒"+","+videoTrack.size/1e6+"MB"+'\n\n 更多信息查看控制台 ！！')
+                console.log('视频宽度:', videoTrack.track_width);
+                console.log('视频高度:', videoTrack.track_height);
+                // console.log('视频帧率:', videoTrack.track_duration / videoTrack.track_timescale);
+            }
+        };
+
+        arrayBuffer.fileStart = 0;
+        mp4box.appendBuffer(arrayBuffer);
+        mp4box.flush();
+    }
+
+    // 选择视频文件
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'video/*';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        getVideoInfo(file);
+    };
+    document.body.appendChild(input);
+
+</script>
+</script>
+</html>

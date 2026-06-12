@@ -1,0 +1,1 @@
+import{s}from"./glsl-tokenizer.3d6d7632.js";import{a as v}from"./atob-lite.2c117282.js";var f=s,p=v,A=g;function g(a){for(var o=Array.isArray(a)?a:f(a),e=0;e<o.length;e++){var t=o[e];if(t.type==="preprocessor"){var r=t.data.match(/\#define\s+SHADER_NAME(_B64)?\s+(.+)$/);if(!!r&&!!r[2]){var n=r[1],i=r[2];return(n?p(i):i).trim()}}}}export{A as g};

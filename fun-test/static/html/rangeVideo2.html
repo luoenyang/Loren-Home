@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>canvas mp4流式加载流式播放</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(to right, #4776E6, #8E54E9);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 25px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 2px dashed #4776E6;
+            text-align: center;
+        }
+
+        .upload-btn {
+            background: linear-gradient(to right, #00b09b, #96c93d);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .file-info {
+            margin-top: 15px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            display: none;
+        }
+
+        .time-controls {
+            margin-bottom: 20px;
+        }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        #timeSlider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: linear-gradient(to right, #4776E6, #8E54E9);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        #timeSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            border: 3px solid #4776E6;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn-success {
+            background: linear-gradient(to right, #00b09b, #96c93d);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(to right, #FF416C, #FF4B2B);
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #4776E6, #8E54E9);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(to right, #FF9800, #FF5722);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .preview-section {
+            margin-bottom: 25px;
+            display: none;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%;
+            /* 16:9 比例 */
+            background: #000;
+        }
+
+        #videoCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            /* width: 100%; */
+            /* height: 100%; */
+            display: block;
+        }
+
+        .performance-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 10;
+        }
+
+        .audio-controls {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .audio-visualization {
+            background: #000;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            padding: 10px;
+        }
+
+        #audioCanvas {
+            width: 100%;
+            height: 100px;
+            display: block;
+            background: linear-gradient(to bottom, #1a1a2e, #16213e);
+        }
+
+        .audio-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .volume-control {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #volumeSlider {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        #volumeSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4776E6;
+            cursor: pointer;
+        }
+
+        .frames-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 25px;
+            display: none;
+        }
+
+        .frames-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .frame-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .frame-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .frame-img {
+            width: 100%;
+            height: 120px;
+            object-fit: contain;
+            background: #f0f0f0;
+        }
+
+        .frame-info {
+            padding: 10px;
+            text-align: center;
+        }
+
+        .frame-time {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+        }
+
+        .frame-size {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .status-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            display: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4776E6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .playback-speed {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .speed-btn {
+            padding: 6px 12px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .speed-btn.active {
+            background: #4776E6;
+        }
+
+        .audio-status {
+            font-size: 0.9rem;
+            color: #666;
+            margin-left: auto;
+            padding: 5px 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+
+        .debug-info {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #666;
+            font-family: monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>canvas mp4流式加载流式播放</h1>
+            <h2>隐式Video，requestAnimationFrame实现，canvas渲染</h2>
+            <p>视频播放，帧提取，音频分离控制（变速不变调，速度音量都可以大于1）</p>
+        </div>
+
+        <div class="content">
+            <!-- 上传区域 -->
+            <div class="upload-section">
+                <button class="upload-btn" id="uploadBtn">
+                    📁 选择MP4视频文件
+                </button>
+                <input type="file" id="fileInput" accept="video/mp4" style="display: none;">
+                <div class="file-info" id="fileInfo"></div>
+                <p style="margin-top: 15px; color: #666; font-size: 0.9rem;">
+                    支持本地MP4文件，不显示video标签，所有渲染在Canvas中完成
+                </p>
+            </div>
+
+            <!-- 加载指示器 -->
+            <div class="loading" id="loadingIndicator">
+                <div class="spinner"></div>
+                <p>正在加载和解码视频...</p>
+            </div>
+
+            <!-- 控制区域 -->
+            <div class="controls" id="controls">
+                <div class="time-controls">
+                    <div class="time-display">
+                        <span>时间: <strong id="currentTime">00:00.000</strong></span>
+                        <span>时长: <strong id="duration">00:00.000</strong></span>
+                        <span>帧率: <strong id="fpsCounter">0 FPS</strong></span>
+                    </div>
+                    <input type="range" id="timeSlider" min="0" max="100" value="0" step="0.001">
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-success" id="playBtn">
+                        ▶️ 播放视频
+                    </button>
+                    <button class="btn btn-danger" id="pauseBtn" disabled>
+                        ⏸️ 暂停视频
+                    </button>
+                    <button class="btn btn-primary" id="captureBtn">
+                        📸 捕获帧
+                    </button>
+                    <button class="btn btn-warning" id="toggleAudioBtn">
+                        🔊 切换音频
+                    </button>
+                    <button class="btn" id="videoBtn1">切换到第1个视频的第10秒</button><button class="btn"
+                        id="videoBtn2">切换到第2个视频的第17秒</button>
+                </div>
+                <div style="text-align: right;color:#FF5722">音频分离(变速不变调)：如果不需要把音频分离，可以注释掉 initAudioSystem</div>
+
+                <div class="playback-speed">
+                    <span>播放速度:</span>
+                    <button class="speed-btn" data-speed="0.5">0.5x</button>
+                    <button class="speed-btn active" data-speed="1">1x</button>
+                    <button class="speed-btn" data-speed="1.5">1.5x</button>
+                    <button class="speed-btn" data-speed="2">2x</button>
+                </div>
+            </div>
+
+            <!-- 预览区域 -->
+            <div class="preview-section" id="previewSection">
+                <div class="video-container">
+                    <div class="video-wrapper">
+                        <canvas id="videoCanvas"></canvas>
+                    </div>
+                    <div class="performance-info" id="performanceInfo">
+                        渲染: 0 FPS | 延迟: 0ms
+                    </div>
+                </div>
+
+                <div class="audio-controls">
+                    <div class="audio-visualization">
+                        <canvas id="audioCanvas" width="800" height="100"></canvas>
+                    </div>
+                    <div class="audio-buttons">
+                        <div class="volume-control">
+                            <span style="font-size: 0.9rem;">音量:</span>
+                            <input type="range" id="volumeSlider" min="0" max="10" step="0.01" value="1">
+                        </div>
+                        <div class="audio-status" id="audioStatus">音频: 开启</div>
+                    </div>
+                    <div class="debug-info" id="debugInfo">
+                        音频状态: 未初始化 | 连接: 无
+                    </div>
+                </div>
+            </div>
+
+            <!-- 捕获的帧 -->
+            <div class="frames-section" id="framesSection">
+                <h3 style="margin-bottom: 15px; color: #333;">📷 已捕获的帧</h3>
+                <div class="frames-grid" id="framesGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 状态提示 -->
+    <div class="status-bar" id="statusBar"></div>
+
+    <script>
+        let defaultMp4Url = '/video/test.mp4';
+        class CanvasVideoPlayer {
+            constructor() {
+                // 创建隐藏的video元素（不在DOM中显示）
+                this.video = document.createElement('video');
+                this.video.style.display = 'none';
+                this.video.muted = false; // 不静音，允许音频
+                this.video.volume = 1;   // 音量设为0
+                this.video.playbackRate = 1; // 播放速度 loaded之后才可以设置，这里设置无效
+                this.video.playsInline = true;
+                this.video.preload = 'auto';
+
+                // Canvas相关
+                this.videoCanvas = document.getElementById('videoCanvas');
+                this.videoCtx = this.videoCanvas.getContext('2d', {
+                    alpha: false,
+                    desynchronized: true
+                });
+
+                // 音频相关
+                this.audioCanvas = document.getElementById('audioCanvas');
+                this.audioCtx = this.audioCanvas.getContext('2d');
+                this.audioContext = null;
+                this.audioSource = null;
+                this.analyser = null;
+                this.gainNode = null;
+                this.isAudioEnabled = true; // 音频总开关
+                this.isAudioConnected = false; // 音频是否已连接
+
+                // 播放控制
+                this.isPlaying = false;
+                this.isVideoLoaded = false;
+                this.currentPlaybackSpeed = 1.0;
+                this.videoDuration = 0;
+
+                // 性能监控
+                this.lastFrameTime = 0;
+                this.frameCount = 0;
+                this.fps = 0;
+                this.animationFrameId = null;
+                this.performanceMonitoringTimeHandle = null;
+
+                // 状态管理
+                this.capturedFrames = [];
+
+                // DOM 元素
+                this.elements = {
+                    controls: document.getElementById('controls'),
+                    previewSection: document.getElementById('previewSection'),
+                    framesSection: document.getElementById('framesSection'),
+                    framesGrid: document.getElementById('framesGrid'),
+                    fileInfo: document.getElementById('fileInfo'),
+                    loadingIndicator: document.getElementById('loadingIndicator'),
+                    statusBar: document.getElementById('statusBar'),
+
+                    // 控制元素
+                    timeSlider: document.getElementById('timeSlider'),
+                    currentTime: document.getElementById('currentTime'),
+                    duration: document.getElementById('duration'),
+                    fpsCounter: document.getElementById('fpsCounter'),
+                    performanceInfo: document.getElementById('performanceInfo'),
+                    audioStatus: document.getElementById('audioStatus'),
+                    debugInfo: document.getElementById('debugInfo'),
+
+                    // 按钮
+                    playBtn: document.getElementById('playBtn'),
+                    pauseBtn: document.getElementById('pauseBtn'),
+                    captureBtn: document.getElementById('captureBtn'),
+                    toggleAudioBtn: document.getElementById('toggleAudioBtn'),
+                    uploadBtn: document.getElementById('uploadBtn'),
+                    fileInput: document.getElementById('fileInput'),
+                    volumeSlider: document.getElementById('volumeSlider'),
+                    speedBtns: document.querySelectorAll('.speed-btn'),
+
+                    videoBtn1: document.getElementById('videoBtn1'),
+                    videoBtn2: document.getElementById('videoBtn2')
+                };
+
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.initAudioSystem();
+                // this.startPerformanceMonitoring();
+
+                // 默认加载视频
+                this.loadVideoFile(defaultMp4Url, true);
+            }
+
+            bindEvents() {
+                // 文件上传
+                this.elements.uploadBtn.addEventListener('click', () => {
+                    this.elements.fileInput.click();
+                });
+
+                this.elements.fileInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file && file.type === 'video/mp4') {
+                        this.loadVideoFile(file, false);
+                    }
+                });
+
+                // 时间滑块
+                let isSeeking = false;
+                this.elements.timeSlider.addEventListener('input', (e) => {
+                    isSeeking = true;
+                    const time = parseFloat(e.target.value);
+                    this.elements.currentTime.textContent = this.formatTime(time);
+                });
+
+                this.elements.timeSlider.addEventListener('change', (e) => {
+                    const time = parseFloat(e.target.value);
+                    this.seekTo(time);
+                    isSeeking = false;
+                });
+
+                // 视频控制
+                this.elements.playBtn.addEventListener('click', () => {
+                    this.playVideo();
+                });
+
+                this.elements.pauseBtn.addEventListener('click', () => {
+                    this.pauseVideo();
+                });
+
+                this.elements.captureBtn.addEventListener('click', () => {
+                    this.captureFrame();
+                });
+
+                // 音频切换
+                this.elements.toggleAudioBtn.addEventListener('click', () => {
+                    this.toggleAudio();
+                });
+
+                // 音量控制
+                this.elements.volumeSlider.addEventListener('input', (e) => {
+                    const volume = parseFloat(e.target.value);
+                    this.setVolume(volume);
+                });
+
+                // 播放速度
+                this.elements.speedBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const speed = parseFloat(e.target.dataset.speed);
+                        this.setPlaybackSpeed(speed);
+
+                        // 更新按钮状态
+                        this.elements.speedBtns.forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                    });
+                });
+
+                // 视频事件监听
+                this.video.addEventListener('loadedmetadata', () => {
+                    this.onVideoLoaded();
+                });
+
+                this.video.addEventListener('error', (e) => {
+                    console.error('Video error:', e);
+                    this.showStatus('视频加载失败', 'error');
+                });
+
+                this.video.addEventListener('timeupdate', () => {
+                    if (!isSeeking) {
+                        const currentTime = this.video.currentTime;
+                        this.elements.timeSlider.value = currentTime;
+                        this.elements.currentTime.textContent = this.formatTime(currentTime);
+                    }
+                });
+
+                // 页面可见性变化
+                document.addEventListener('visibilitychange', () => {
+                    // if (document.hidden) {
+                    //     this.pauseVideo();
+                    // }
+                });
+
+                // 窗口大小变化
+                window.addEventListener('resize', () => {
+                    // if (this.isVideoLoaded) {
+                    //     this.resizeCanvas();
+                    // }
+                });
+
+                this.elements.videoBtn1.addEventListener('click', async() => {
+                    this.pauseVideo();
+                    await this.loadVideoFile('/video/test.mp4', true, 10);
+                    await this.playVideo();
+                     setTimeout(() => {
+                        this.showStatus('多个视频的画布，使用这种方式可能会比较卡顿，应该一个视频创建一个播放器', 'warning');
+                    }, 1000)
+                });
+                this.elements.videoBtn2.addEventListener('click', async() => {
+                    this.pauseVideo();
+                    await this.loadVideoFile('/video/lx.mp4', true, 17);
+                    await this.playVideo();
+                     setTimeout(()=>{
+                         this.showStatus('多个视频的画布，使用这种方式可能会比较卡顿，应该一个视频创建一个播放器', 'warning');
+                     },1000)
+                });
+            }
+
+            initAudioSystem() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.analyser = this.audioContext.createAnalyser();
+                    this.analyser.fftSize = 256;
+                    this.analyser.smoothingTimeConstant = 0.6;
+
+                    // 创建Gain节点用于音量控制
+                    this.gainNode = this.audioContext.createGain();
+                    this.gainNode.gain.value = 0.7; // 默认音量
+
+                    // 初始化音频源连接
+                    this.connectAudioSource();
+
+                    this.updateAudioStatus();
+                    this.updateDebugInfo('音频系统初始化成功');
+
+                } catch (error) {
+                    console.warn('Web Audio API 初始化失败:', error);
+                    this.isAudioEnabled = false;
+                    this.updateAudioStatus();
+                    this.updateDebugInfo('音频初始化失败: ' + error.message);
+                }
+            }
+
+            connectAudioSource() {
+                if (!this.audioContext || this.audioSource) {
+                    return; // 已经连接或音频上下文不可用
+                }
+
+                try {
+                    // 创建音频源（只创建一次）
+                    this.audioSource = this.audioContext.createMediaElementSource(this.video);
+
+                    // 连接音频节点：video -> gain -> analyser
+                    this.audioSource.connect(this.gainNode);
+                    this.gainNode.connect(this.analyser);
+
+                    this.isAudioConnected = true;
+                    this.updateDebugInfo(`音频源已连接，状态: ${this.audioContext.state}`);
+
+                } catch (error) {
+                    console.error('连接音频源失败:', error);
+                    this.updateDebugInfo('音频源连接失败: ' + error.message);
+                }
+            }
+
+            connectAudioToDestination() {
+                if (!this.audioContext || !this.analyser || this.audioContext.state === 'closed') {
+                    return;
+                }
+
+                try {
+                    // 确保音频上下文激活
+                    if (this.audioContext.state === 'suspended') {
+                        this.audioContext.resume().then(() => {
+                            console.log('音频上下文已激活');
+                        });
+                    }
+
+                    // 连接到音频输出
+                    this.analyser.connect(this.audioContext.destination);
+                    this.updateDebugInfo(`音频已连接到输出，状态: ${this.audioContext.state}`);
+
+                } catch (error) {
+                    console.error('连接音频输出失败:', error);
+                    this.updateDebugInfo('音频输出连接失败: ' + error.message);
+                }
+            }
+
+            disconnectAudioFromDestination() {
+                if (!this.analyser) return;
+
+                try {
+                    // 断开与音频输出的连接（静音）
+                    this.analyser.disconnect();
+                    this.updateDebugInfo('音频已从输出断开');
+
+                } catch (error) {
+                    console.error('断开音频连接失败:', error);
+                    this.updateDebugInfo('音频断开失败: ' + error.message);
+                }
+            }
+
+            toggleAudio() {
+                this.isAudioEnabled = !this.isAudioEnabled;
+
+                if (this.isAudioEnabled) {
+                    // 开启音频
+                    this.connectAudioSource();
+                    this.connectAudioToDestination();
+                    this.elements.toggleAudioBtn.innerHTML = '🔇 关闭音频';
+                    this.showStatus('音频已开启', 'success');
+                } else {
+                    // 关闭音频
+                    this.disconnectAudioFromDestination();
+                    this.elements.toggleAudioBtn.innerHTML = '🔊 开启音频';
+                    this.showStatus('音频已关闭', 'info');
+                }
+
+                this.updateAudioStatus();
+            }
+
+            setVolume(volume) {
+                if (this.gainNode) {
+                    this.gainNode.gain.value = volume; // 这里不只1  而且变调不变速
+                }
+                this.video.volume = Math.min(volume,1);// 视频原生只能最大是1
+                this.updateDebugInfo(`音量设置: ${volume.toFixed(2)}`);
+            }
+
+            updateAudioStatus() {
+                let status = '';
+                if (!this.audioContext) {
+                    status = '音频不可用';
+                } else if (!this.isAudioEnabled) {
+                    status = '已关闭';
+                } else if (this.audioContext.state === 'running') {
+                    status = '播放中';
+                } else if (this.audioContext.state === 'suspended') {
+                    status = '已暂停';
+                } else {
+                    status = '就绪';
+                }
+
+                this.elements.audioStatus.textContent = `音频: ${status}`;
+                this.elements.toggleAudioBtn.innerHTML = this.isAudioEnabled ? '🔇 关闭音频' : '🔊 开启音频';
+            }
+
+            updateDebugInfo(message) {
+                const audioState = this.audioContext ? this.audioContext.state : '未初始化';
+                const connected = this.isAudioConnected ? '已连接' : '未连接';
+                const enabled = this.isAudioEnabled ? '开启' : '关闭';
+
+                this.elements.debugInfo.innerHTML = `
+                    音频状态: ${audioState} | 
+                    连接: ${connected} | 
+                    开关: ${enabled}<br>
+                    ${message}
+                `;
+            }
+
+            async loadVideoFile(file, isUrl, time) {
+                try {
+                    this.showLoading(true);
+                    this.showStatus('正在加载视频...', 'info');
+
+                    let videoUrl;
+                    if (isUrl) {
+                        videoUrl = file;
+                    } else {
+                        videoUrl = URL.createObjectURL(file);
+                    }
+
+
+                    await this.loadVideo(videoUrl);
+
+                    if (time) {
+                        this.video.currentTime = time
+                    }
+
+                    this.showStatus('视频加载成功', 'success');
+
+                } catch (error) {
+                    console.error('加载视频文件失败:', error);
+                    this.showStatus('加载失败: ' + error.message, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async loadVideo(url) {
+                return new Promise((resolve, reject) => {
+                    this.video.src = url;
+                    this.video.load();
+
+                    const onLoaded = () => {
+                        this.video.removeEventListener('loadedmetadata', onLoaded);
+                        this.video.removeEventListener('error', onError);
+                        resolve();
+                    };
+
+                    const onError = (e) => {
+                        this.video.removeEventListener('loadedmetadata', onLoaded);
+                        this.video.removeEventListener('error', onError);
+                        reject(new Error('视频加载失败'));
+                    };
+
+                    this.video.addEventListener('loadedmetadata', onLoaded);
+                    this.video.addEventListener('error', onError);
+                });
+            }
+
+            onVideoLoaded() {
+                this.isVideoLoaded = true;
+                this.videoDuration = this.video.duration;
+
+                // 更新UI
+                this.elements.controls.style.display = 'block';
+                this.elements.previewSection.style.display = 'block';
+
+                // 设置时间滑块
+                this.elements.timeSlider.max = this.videoDuration;
+                this.elements.duration.textContent = this.formatTime(this.videoDuration);
+
+                // 设置画布尺寸
+                this.resizeCanvas();
+
+                // 初始化显示第一帧
+                this.seekTo(0);
+
+                // 确保音频系统已连接
+                this.connectAudioSource();
+
+                // 开始渲染循环
+                // this.startRenderLoop();
+
+
+                this.showStatus('视频加载完成，可以开始播放', 'success');
+            }
+
+            resizeCanvas() {
+                const wrapper = document.querySelector('.video-wrapper');
+                const wrapperWidth = wrapper.clientWidth;
+                const wrapperHeight = wrapper.clientHeight;
+
+                // 计算视频宽高比
+                const videoRatio = this.video.videoWidth / this.video.videoHeight;
+                const containerRatio = wrapperWidth / wrapperHeight;
+
+                let canvasWidth, canvasHeight;
+
+                // 自适应居中显示，不变形
+                if (videoRatio > containerRatio) {
+                    // 视频比容器宽，以宽度为基准
+                    canvasWidth = wrapperWidth;
+                    canvasHeight = wrapperWidth / videoRatio;
+                } else {
+                    // 视频比容器高，以高度为基准
+                    canvasHeight = wrapperHeight;
+                    canvasWidth = wrapperHeight * videoRatio;
+                }
+
+                // 设置画布尺寸
+                this.videoCanvas.width = canvasWidth;
+                this.videoCanvas.height = canvasHeight;
+
+                // 居中定位
+                this.videoCanvas.style.position = 'absolute';
+                this.videoCanvas.style.left = `${(wrapperWidth - canvasWidth) / 2}px`;
+                this.videoCanvas.style.top = `${(wrapperHeight - canvasHeight) / 2}px`;
+            }
+
+            stopRenderLoop() {
+                if (this.animationFrameId) {
+                    cancelAnimationFrame(this.animationFrameId);
+                    this.animationFrameId = null;
+                }
+            }
+            startRenderLoop() {
+                let lastRenderTime = 0;
+                const targetFPS = 30;
+                const frameInterval = 1000 / targetFPS;
+
+                const render = (timestamp) => {
+                    // 控制帧率
+                    if (timestamp - lastRenderTime >= frameInterval) {
+                        this.renderVideoFrame();
+                        this.renderAudioVisualization();
+                        lastRenderTime = timestamp;
+                    }
+
+                    this.animationFrameId = requestAnimationFrame(render);
+                };
+
+                this.animationFrameId = requestAnimationFrame(render);
+            }
+
+            renderVideoFrame() {
+                if (!this.isVideoLoaded || this.video.readyState < 2) return;
+
+                // 清除画布
+                this.videoCtx.clearRect(0, 0, this.videoCanvas.width, this.videoCanvas.height);
+
+                // 自适应居中绘制，保持原始比例
+                const drawWidth = this.videoCanvas.width;
+                const drawHeight = this.videoCanvas.height;
+
+                // 使用硬件加速绘制视频帧（居中，不变形）
+                this.videoCtx.drawImage(
+                    this.video,
+                    0, 0, this.video.videoWidth, this.video.videoHeight,
+                    0, 0, drawWidth, drawHeight
+                );
+
+                // 更新帧率计数
+                this.frameCount++;
+            }
+
+            renderAudioVisualization() {
+                if (!this.analyser || !this.isAudioEnabled || !this.isAudioConnected) {
+                    return;
+                }
+
+                const bufferLength = this.analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                this.analyser.getByteFrequencyData(dataArray);
+
+                // 清除音频画布
+                this.audioCtx.clearRect(0, 0, this.audioCanvas.width, this.audioCanvas.height);
+
+                // 绘制音频可视化
+                const barWidth = (this.audioCanvas.width / bufferLength) * 2.5;
+                let x = 0;
+
+                // 创建渐变背景
+                const gradient = this.audioCtx.createLinearGradient(0, 0, 0, this.audioCanvas.height);
+                gradient.addColorStop(0, '#0f3460');
+                gradient.addColorStop(1, '#16213e');
+                this.audioCtx.fillStyle = gradient;
+                this.audioCtx.fillRect(0, 0, this.audioCanvas.width, this.audioCanvas.height);
+
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = (dataArray[i] / 255) * this.audioCanvas.height;
+
+                    // 使用渐变色
+                    const hue = (i / bufferLength) * 360;
+                    this.audioCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                    this.audioCtx.fillRect(x, this.audioCanvas.height - barHeight, barWidth, barHeight);
+
+                    x += barWidth + 1;
+                }
+            }
+
+            startPerformanceMonitoring() {
+                this.frameCount = 0;
+                this.lastFrameTime = performance.now();
+                this.performanceMonitoringTimeHandle = setInterval(() => {
+                    // performance.now() 是 Web API 中的一个方法，用于返回一个高精度的时间戳，表示从性能时间起点（time origin）到当前调用时经过的毫秒数。时间起点是文档生命周期的开始节点，通常对应于页面导航的起始时刻。‌
+                    // ‌高精度计时与时间起点：‌ 该方法返回值以双精度浮点数形式表示，精度可达微秒级，优于Date.now()的毫秒精度。时间起点固定为文档加载开始时，不受系统时间调整影响，因此适合测量代码执行间隔或持续时间
+                    // ‌与Date.now()的对比：‌ performance.now() 与 Date.now() 的核心区别在于精度和时间基准：Date.now() 基于Unix时间戳，受系统时钟同步影响，而 performance.now() 从时间起点计算，提供更稳定的间隔测量，且 performance.timing.navigationStart + performance.now() 约等于 Date.now()
+                    const now = performance.now();
+                    const elapsed = now - this.lastFrameTime;// 毫秒
+
+                    // 计算FPS  帧/秒 所以*1000
+                    this.fps = Math.round((this.frameCount * 1000) / elapsed);
+
+                    // 更新显示
+                    this.elements.fpsCounter.textContent = `${this.fps} FPS`;
+                    this.elements.performanceInfo.textContent =
+                        `渲染: ${this.fps} FPS | 分辨率: ${this.video.videoWidth}×${this.video.videoHeight}`;
+
+                    // 重置计数器
+                    this.frameCount = 0;
+                    this.lastFrameTime = now;
+
+                }, 1000);
+            }
+            stopPerformanceMonitoring() {
+                clearInterval(this.performanceMonitoringTimeHandle);
+                this.performanceMonitoringTimeHandle = null;
+            }
+
+            playVideo() {
+                if (!this.isVideoLoaded) return;
+
+                // 确保音频上下文激活
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+
+                // 播放视频
+                this.video.play().then(() => {
+                    this.isPlaying = true;
+                    this.updateButtonStates();
+                    if (!this.animationFrameId) {
+                        this.startRenderLoop();
+                    }
+                    this.startPerformanceMonitoring();
+                    this.showStatus('视频播放中', 'info');
+
+                    // 如果音频已启用，确保连接到输出
+                    if (this.isAudioEnabled) {
+                        this.connectAudioToDestination();
+                    }
+
+                }).catch(error => {
+                    console.error('播放失败:', error);
+                    this.showStatus('播放失败，请检查浏览器控制台', 'error');
+                });
+
+            }
+
+            pauseVideo() {
+                this.video.pause();
+                this.isPlaying = false;
+                this.updateButtonStates();
+                this.stopRenderLoop();
+                this.stopPerformanceMonitoring();
+                this.showStatus('视频已暂停', 'info');
+            }
+
+            seekTo(time) {
+                if (!this.isVideoLoaded) return;
+
+                // 暂停播放进行跳转
+                const wasPlaying = !this.video.paused;
+                if (wasPlaying) {
+                    this.video.pause();
+                }
+
+                this.video.currentTime = Math.min(time, this.videoDuration);
+
+                // 强制渲染一帧
+                setTimeout(() => {
+                    this.renderVideoFrame();
+
+                    // 如果之前是播放状态，恢复播放
+                    if (wasPlaying) {
+                        setTimeout(() => {
+                            this.video.play();
+                        }, 50);
+                    }
+                }, 100);
+            }
+
+            setPlaybackSpeed(speed) {
+                if (!this.isVideoLoaded) return;
+
+                this.currentPlaybackSpeed = speed;
+                this.video.playbackRate = speed;
+
+                this.showStatus(`播放速度设置为: ${speed}x`, 'info');
+            }
+
+            captureFrame() {
+                if (!this.isVideoLoaded) return;
+
+                try {
+                    // 创建临时canvas捕获当前帧
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = this.video.videoWidth;
+                    tempCanvas.height = this.video.videoHeight;
+                    const tempCtx = tempCanvas.getContext('2d');
+
+                    // 绘制当前视频帧
+                    tempCtx.drawImage(this.video, 0, 0);
+
+                    // 获取图像数据
+                    const imageUrl = tempCanvas.toDataURL('image/png');
+                    const timestamp = this.video.currentTime;
+
+                    // 保存捕获的帧
+                    this.capturedFrames.push({
+                        time: timestamp,
+                        url: imageUrl,
+                        timestamp: Date.now()
+                    });
+
+                    // 显示到网格
+                    this.displayFrameInGrid(imageUrl, timestamp);
+
+                    // 显示帧区域
+                    this.elements.framesSection.style.display = 'block';
+
+                    // 自动下载
+                    this.downloadFrame(imageUrl, timestamp);
+
+                    this.showStatus(`已捕获第 ${this.capturedFrames.length} 帧`, 'success');
+
+                } catch (error) {
+                    console.error('捕获帧失败:', error);
+                    this.showStatus('捕获失败', 'error');
+                }
+            }
+
+            displayFrameInGrid(imageUrl, timestamp) {
+                const frameCard = document.createElement('div');
+                frameCard.className = 'frame-card';
+
+                frameCard.innerHTML = `
+                    <img src="${imageUrl}" class="frame-img" alt="帧 ${this.formatTime(timestamp)}">
+                    <div class="frame-info">
+                        <div class="frame-time">${this.formatTime(timestamp)}</div>
+                        <div class="frame-size">${this.video.videoWidth}×${this.video.videoHeight}</div>
+                    </div>
+                `;
+
+                // 点击预览
+                frameCard.addEventListener('click', () => {
+                    this.previewFrame(imageUrl, timestamp);
+                });
+
+                this.elements.framesGrid.appendChild(frameCard);
+            }
+
+            previewFrame(imageUrl, timestamp) {
+                const previewWindow = window.open('', '_blank');
+                previewWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>帧预览 - ${this.formatTime(timestamp)}</title>
+                        <style>
+                            body { 
+                                margin: 0; 
+                                padding: 20px; 
+                                background: #f0f0f0;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                min-height: 100vh;
+                            }
+                            .preview-container {
+                                max-width: 90vw;
+                                max-height: 90vh;
+                                text-align: center;
+                            }
+                            img { 
+                                max-width: 100%; 
+                                max-height: 80vh; 
+                                display: block;
+                                margin: 0 auto;
+                                border-radius: 8px;
+                                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                            }
+                            .info {
+                                margin: 10px 0;
+                                font-family: Arial, sans-serif;
+                                color: #333;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="preview-container">
+                            <div class="info">时间: ${this.formatTime(timestamp)} | 分辨率: ${this.video.videoWidth}×${this.video.videoHeight}</div>
+                            <img src="${imageUrl}">
+                        </div>
+                    </body>
+                    </html>
+                `);
+            }
+
+            downloadFrame(imageUrl, timestamp) {
+                const link = document.createElement('a');
+                link.download = `frame-${this.formatTime(timestamp, true)}.png`;
+                link.href = imageUrl;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            updateButtonStates() {
+                this.elements.playBtn.disabled = this.isPlaying;
+                this.elements.pauseBtn.disabled = !this.isPlaying;
+            }
+
+            formatTime(seconds, forFilename = false) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                const ms = Math.floor((seconds % 1) * 1000);
+
+                if (forFilename) {
+                    return `${mins.toString().padStart(2, '0')}-${secs.toString().padStart(2, '0')}-${ms.toString().padStart(3, '0')}`;
+                }
+
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            showLoading(show) {
+                this.elements.loadingIndicator.style.display = show ? 'block' : 'none';
+            }
+
+            showStatus(message, type = 'info') {
+                if(this.statusSetTimeout){
+                    clearTimeout(this.statusSetTimeout)
+                }
+                const bar = this.elements.statusBar;
+                bar.textContent = message;
+                bar.style.display = 'flex';
+
+                // 设置颜色
+                bar.style.background = type === 'error' ? '#ff5252' :
+                    type === 'success' ? '#4CAF50' :
+                        type === 'warning' ? '#FF9800' :
+                            'rgba(0, 0, 0, 0.8)';
+
+                // 3秒后隐藏
+                this.statusSetTimeout= setTimeout(() => {
+                    bar.style.display = 'none';
+                }, 10000);
+            }
+
+            // 清理资源
+            destroy() {
+                if (this.animationFrameId) {
+                    cancelAnimationFrame(this.animationFrameId);
+                }
+
+                if (this.audioContext) {
+                    this.audioContext.close();
+                }
+
+                // 清理对象URL
+                if (this.video.src && this.video.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(this.video.src);
+                }
+
+                this.video.pause();
+                this.video.src = '';
+                this.video.load();
+            }
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            window.player = new CanvasVideoPlayer();
+            console.log('无Video标签播放器已初始化');
+
+            // 页面卸载时清理
+            window.addEventListener('beforeunload', () => {
+                window.player.destroy();
+            });
+        });
+    </script>
+</body>
+
+</html>

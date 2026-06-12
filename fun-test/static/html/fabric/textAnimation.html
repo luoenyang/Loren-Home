@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fabric.js 5.3.0 丝滑打字机强调效果</title>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/6.6.5/fabric.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            font-weight: 600;
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .canvas-container {
+            width: 100%;
+            height: 300px;
+            margin: 20px 0;
+            border: 2px solid #4a90e2;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #1e1e2f;
+            position: relative;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #4a90e2, #63b3ed);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .style-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        label {
+            font-weight: 500;
+            color: #63b3ed;
+        }
+        
+        input[type="range"], select, input[type="text"] {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid #4a90e2;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .text-input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border: 1px solid #4a90e2;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+        }
+        
+        .description {
+            margin-top: 20px;
+            line-height: 1.6;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .presets {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .preset-btn {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+        
+        .typing-info {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 1.1rem;
+            color: #63b3ed;
+        }
+        
+        .active-preset {
+            background: linear-gradient(45deg, #ff7e5f, #feb47b) !important;
+        }
+        
+        .color-palette {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .color-option.active {
+            border-color: white;
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fabric.js 5.3.0 丝滑打字机强调效果</h1>
+        
+        <div class="canvas-container">
+            <canvas id="textCanvas"></canvas>
+        </div>
+        
+        <div class="typing-info">
+            <span id="typingStatus">准备开始</span>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn">开始打字</button>
+            <button id="pauseBtn" disabled>暂停</button>
+            <button id="resetBtn">重置</button>
+        </div>
+        
+        <input type="text" id="textInput" class="text-input" placeholder="输入您想要显示的文本..." value="Fabric.js 丝滑打字机强调效果演示">
+        
+        <div class="presets">
+            <button class="preset-btn active-preset" data-preset="scale">缩放强调</button>
+            <button class="preset-btn" data-preset="color">颜色强调</button>
+            <button class="preset-btn" data-preset="glow">发光强调</button>
+            <button class="preset-btn" data-preset="bounce">弹跳强调</button>
+        </div>
+        
+        <div class="style-controls">
+            <div class="control-group">
+                <label for="typingSpeed">打字速度</label>
+                <input type="range" id="typingSpeed" min="50" max="500" value="200">
+                <span id="typingSpeedValue">中速</span>
+            </div>
+            
+            <div class="control-group">
+                <label for="emphasisDuration">强调时长</label>
+                <input type="range" id="emphasisDuration" min="100" max="1000" value="400">
+                <span id="emphasisDurationValue">400ms</span>
+            </div>
+            
+            <div class="control-group">
+                <label for="fontSize">字体大小</label>
+                <input type="range" id="fontSize" min="20" max="100" value="48">
+                <span id="fontSizeValue">48px</span>
+            </div>
+            
+            <div class="control-group">
+                <label for="fontFamily">字体</label>
+                <select id="fontFamily">
+                    <option value="Arial">Arial</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Microsoft YaHei">微软雅黑</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="baseColor">基础颜色</label>
+                <input type="color" id="baseColor" value="#ffffff">
+            </div>
+            
+            <div class="control-group">
+                <label>强调颜色方案</label>
+                <div class="color-palette">
+                    <div class="color-option active" style="background: linear-gradient(45deg, #ff6b6b, #ff8e8e)" data-colors="#ff6b6b,#ff8e8e"></div>
+                    <div class="color-option" style="background: linear-gradient(45deg, #4ecdc4, #88d3ce)" data-colors="#4ecdc4,#88d3ce"></div>
+                    <div class="color-option" style="background: linear-gradient(45deg, #ffd93d, #ffed4e)" data-colors="#ffd93d,#ffed4e"></div>
+                    <div class="color-option" style="background: linear-gradient(45deg, #6c5ce7, #a29bfe)" data-colors="#6c5ce7,#a29bfe"></div>
+                    <div class="color-option" style="background: linear-gradient(45deg, #fd79a8, #ff9fbe)" data-colors="#fd79a8,#ff9fbe"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="description">
+            <p>这个示例展示了如何在Fabric.js 5.3.0中实现丝滑的打字机效果，每个字出现时都有优雅的强调动画。</p>
+            <p>强调效果直接应用在文字本身上，不会创建额外的文字层，保持界面干净整洁。</p>
+        </div>
+    </div>
+
+    <script>
+        // 初始化画布
+        const canvas = new fabric.Canvas('textCanvas', {
+            width: document.querySelector('.canvas-container').clientWidth,
+            height: 300,
+            backgroundColor: '#1e1e2f'
+        });
+
+        // 变量初始化
+        let fullText = '';
+        let currentIndex = 0;
+        let isTyping = false;
+        let typeTimeout = null;
+        let typingSpeed = 150;
+        let emphasisEffect = 'scale';
+        let emphasisDuration = 400;
+        let charObjects = [];
+        let originalColors = [];
+        let emphasisColors = ['#ff6b6b', '#ff8e8e']; // 默认强调颜色
+
+        // 创建文本对象
+        const text = new fabric.Text('', {
+            left: 50,
+            top: canvas.height / 2 - 30,
+            fontSize: 48,
+            fill: '#ffffff',
+            fontFamily: 'Arial',
+            lineHeight: 1.2
+        });
+        canvas.add(text);
+
+        // 获取DOM元素
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const textInput = document.getElementById('textInput');
+        const typingSpeedControl = document.getElementById('typingSpeed');
+        const typingSpeedValue = document.getElementById('typingSpeedValue');
+        const emphasisDurationControl = document.getElementById('emphasisDuration');
+        const emphasisDurationValue = document.getElementById('emphasisDurationValue');
+        const fontSize = document.getElementById('fontSize');
+        const fontSizeValue = document.getElementById('fontSizeValue');
+        const fontFamily = document.getElementById('fontFamily');
+        const baseColor = document.getElementById('baseColor');
+        const colorOptions = document.querySelectorAll('.color-option');
+        const presetBtns = document.querySelectorAll('.preset-btn');
+        const typingStatus = document.getElementById('typingStatus');
+
+        // 更新打字速度
+        typingSpeedControl.addEventListener('input', function() {
+            typingSpeed = 550 - this.value;
+            
+            if (this.value < 100) {
+                typingSpeedValue.textContent = '极慢';
+            } else if (this.value < 200) {
+                typingSpeedValue.textContent = '慢速';
+            } else if (this.value < 350) {
+                typingSpeedValue.textContent = '中速';
+            } else {
+                typingSpeedValue.textContent = '快速';
+            }
+        });
+
+        // 更新强调时长
+        emphasisDurationControl.addEventListener('input', function() {
+            emphasisDuration = parseInt(this.value);
+            emphasisDurationValue.textContent = `${emphasisDuration}ms`;
+        });
+
+        // 更新字体大小
+        fontSize.addEventListener('input', function() {
+            fontSizeValue.textContent = `${this.value}px`;
+        });
+
+        // 颜色方案选择
+        colorOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                colorOptions.forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                emphasisColors = this.getAttribute('data-colors').split(',');
+            });
+        });
+
+        // 开始打字
+        startBtn.addEventListener('click', function() {
+            if (!isTyping) {
+                fullText = textInput.value || '请输入文本内容...';
+                if (currentIndex >= fullText.length) {
+                    currentIndex = 0;
+                    resetCharObjects();
+                }
+                
+                isTyping = true;
+                updateControls();
+                typingStatus.textContent = '正在输入...';
+                
+                // 创建字符对象
+                createCharObjects();
+                typeWriter();
+            }
+        });
+
+        // 暂停打字
+        pauseBtn.addEventListener('click', function() {
+            if (isTyping) {
+                clearTimeout(typeTimeout);
+                isTyping = false;
+                updateControls();
+                typingStatus.textContent = '已暂停';
+            }
+        });
+
+        // 重置
+        resetBtn.addEventListener('click', function() {
+            clearTimeout(typeTimeout);
+            isTyping = false;
+            currentIndex = 0;
+            resetCharObjects();
+            text.set('text', '');
+            text.set('visible', true);
+            canvas.renderAll();
+            updateControls();
+            typingStatus.textContent = '已重置';
+        });
+
+        // 更新控制按钮状态
+        function updateControls() {
+            startBtn.disabled = isTyping;
+            pauseBtn.disabled = !isTyping;
+        }
+
+        // 重置字符对象
+        function resetCharObjects() {
+            charObjects.forEach(obj => {
+                canvas.remove(obj);
+            });
+            charObjects = [];
+            originalColors = [];
+        }
+
+        // 创建字符对象
+        function createCharObjects() {
+            resetCharObjects();
+            
+            const textStyle = {
+                fontSize: parseInt(fontSize.value),
+                fontFamily: fontFamily.value,
+                fill: baseColor.value
+            };
+            
+            // 使用临时文本对象测量字符位置
+            const tempText = new fabric.Text('', textStyle);
+            
+            let currentLeft = text.left;
+            
+            for (let i = 0; i < fullText.length; i++) {
+                const char = fullText[i];
+                
+                // 测量当前字符宽度
+                tempText.set('text', char);
+                const charWidth = tempText.width;
+                
+                const charObj = new fabric.Text(char, {
+                    left: currentLeft,
+                    top: text.top,
+                    fontSize: textStyle.fontSize,
+                    fontFamily: textStyle.fontFamily,
+                    fill: textStyle.fill,
+                    visible: i < currentIndex,
+                    originX: 'left',
+                    originY: 'center'
+                });
+                
+                canvas.add(charObj);
+                charObjects.push(charObj);
+                originalColors.push(textStyle.fill);
+                
+                currentLeft += charWidth + 2; // 添加小间距
+            }
+            
+            // 隐藏原始文本
+            text.set('visible', false);
+        }
+
+        // 打字机动画函数
+        function typeWriter() {
+            if (currentIndex < fullText.length) {
+                // 显示当前字符
+                const currentChar = charObjects[currentIndex];
+                if (currentChar) {
+                    currentChar.set('visible', true);
+                    emphasizeCharacter(currentIndex);
+                }
+                
+                canvas.requestRenderAll();
+                currentIndex++;
+                typeTimeout = setTimeout(typeWriter, typingSpeed);
+            } else {
+                // 打字完成
+                isTyping = false;
+                updateControls();
+                typingStatus.textContent = '输入完成';
+            }
+        }
+
+        // 强调当前字符
+        function emphasizeCharacter(index) {
+            const currentChar = charObjects[index];
+            if (!currentChar) return;
+            
+            // 保存原始颜色
+            if (originalColors[index] === undefined) {
+                originalColors[index] = currentChar.fill;
+            }
+            
+            // 根据强调效果执行动画
+            switch(emphasisEffect) {
+                case 'scale':
+                    // 缩放强调 - 基于字符中心缩放
+                    currentChar.animate('scaleX', 1.4, {
+                        duration: emphasisDuration / 2,
+                        onChange: () => canvas.requestRenderAll(),
+                        easing: fabric.util.ease.easeOutCubic,
+                        onComplete: () => {
+                            currentChar.animate('scaleX', 1, {
+                                duration: emphasisDuration / 2,
+                                onChange: () => canvas.requestRenderAll(),
+                                easing: fabric.util.ease.easeInCubic
+                            });
+                        }
+                    });
+                    
+                    currentChar.animate('scaleY', 1.4, {
+                        duration: emphasisDuration / 2,
+                        onChange: () => canvas.requestRenderAll(),
+                        easing: fabric.util.ease.easeOutCubic,
+                        onComplete: () => {
+                            currentChar.animate('scaleY', 1, {
+                                duration: emphasisDuration / 2,
+                                onChange: () => canvas.requestRenderAll(),
+                                easing: fabric.util.ease.easeInCubic
+                            });
+                        }
+                    });
+                    break;
+                    
+                case 'color':
+                    // 颜色强调 - 使用协调的渐变颜色
+                    const colorIndex = index % emphasisColors.length;
+                    const nextColorIndex = (index + 1) % emphasisColors.length;
+                    
+                    // 创建渐变效果
+                    currentChar.set('fill', new fabric.Gradient({
+                        type: 'linear',
+                        coords: { x1: 0, y1: 0, x2: currentChar.width, y2: 0 },
+                        colorStops: [
+                            { offset: 0, color: emphasisColors[colorIndex] },
+                            { offset: 1, color: emphasisColors[nextColorIndex] }
+                        ]
+                    }));
+                    
+                    canvas.requestRenderAll();
+                    
+                    setTimeout(() => {
+                        currentChar.animate('fill', originalColors[index], {
+                            duration: emphasisDuration,
+                            onChange: () => canvas.requestRenderAll(),
+                            easing: fabric.util.ease.easeInOutCubic
+                        });
+                    }, emphasisDuration / 2);
+                    break;
+                    
+                case 'glow':
+                    // 发光强调 - 添加阴影然后移除
+                    currentChar.set('shadow', new fabric.Shadow({
+                        color: emphasisColors[0],
+                        blur: 20,
+                        offsetX: 0,
+                        offsetY: 0
+                    }));
+                    canvas.requestRenderAll();
+                    
+                    setTimeout(() => {
+                        currentChar.animate('shadow.blur', 0, {
+                            duration: emphasisDuration,
+                            onChange: () => canvas.requestRenderAll(),
+                            easing: fabric.util.ease.easeOutCubic,
+                            onComplete: () => {
+                                currentChar.set('shadow', null);
+                                canvas.requestRenderAll();
+                            }
+                        });
+                    }, emphasisDuration / 2);
+                    break;
+                    
+                case 'bounce':
+                    // 弹跳强调 - 字符上下弹跳
+                    const originalTop = currentChar.top;
+                    currentChar.animate('top', originalTop - 12, {
+                        duration: emphasisDuration / 3,
+                        onChange: () => canvas.requestRenderAll(),
+                        easing: fabric.util.ease.easeOutCubic,
+                        onComplete: () => {
+                            currentChar.animate('top', originalTop + 6, {
+                                duration: emphasisDuration / 3,
+                                onChange: () => canvas.requestRenderAll(),
+                                easing: fabric.util.ease.easeInCubic,
+                                onComplete: () => {
+                                    currentChar.animate('top', originalTop - 3, {
+                                        duration: emphasisDuration / 6,
+                                        onChange: () => canvas.requestRenderAll(),
+                                        easing: fabric.util.ease.easeOutCubic,
+                                        onComplete: () => {
+                                            currentChar.animate('top', originalTop, {
+                                                duration: emphasisDuration / 6,
+                                                onChange: () => canvas.requestRenderAll(),
+                                                easing: fabric.util.ease.easeInCubic
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                    break;
+            }
+        }
+
+        // 预设效果
+        presetBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                emphasisEffect = this.getAttribute('data-preset');
+                
+                // 更新活动按钮样式
+                presetBtns.forEach(b => b.classList.remove('active-preset'));
+                this.classList.add('active-preset');
+            });
+        });
+
+        // 窗口大小变化时调整画布
+        window.addEventListener('resize', function() {
+            canvas.setDimensions({
+                width: document.querySelector('.canvas-container').clientWidth,
+                height: 300
+            });
+            canvas.requestRenderAll();
+        });
+    </script>
+</body>
+</html>

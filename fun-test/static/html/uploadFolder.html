@@ -1,0 +1,484 @@
+<!-- 文件夹上传  -->
+ <!-- el-upload 组件 需要开启 uploadFileRef.value.$el.querySelector('input').webkitdirectory=true -->
+
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网页文件夹上传演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            margin-top: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        
+        .upload-area {
+            width: 100%;
+            max-width: 600px;
+            height: 200px;
+            border: 3px dashed #3498db;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #f8fafc;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area:hover {
+            background-color: #e8f4fc;
+            border-color: #2980b9;
+        }
+        
+        .upload-area.drag-over {
+            background-color: #d6eaf8;
+            border-color: #1abc9c;
+        }
+        
+        .upload-icon {
+            font-size: 60px;
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+        
+        .upload-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .upload-hint {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, #3498db, #2c3e50);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .content-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        
+        .folder-structure, .file-preview {
+            flex: 1;
+            min-width: 300px;
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .folder-tree {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .folder-item {
+            margin-bottom: 5px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .folder-item:hover {
+            background-color: #f1f8ff;
+        }
+        
+        .folder-item.selected {
+            background-color: #e1f0ff;
+            font-weight: bold;
+        }
+        
+        .file-icon {
+            margin-right: 8px;
+            color: #3498db;
+        }
+        
+        .folder-icon {
+            margin-right: 8px;
+            color: #f39c12;
+        }
+        
+        .file-content {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #7f8c8d;
+            padding: 40px 20px;
+        }
+        
+        .empty-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+            color: #bdc3c7;
+        }
+        
+        .compatibility {
+            background-color: #fff9e6;
+            border-left: 4px solid #f1c40f;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        
+        .compatibility h3 {
+            color: #f39c12;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .content-section {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>网页文件夹上传演示</h1>
+        <p class="subtitle">拖放或选择文件夹以上传并查看其内容</p>
+    </header>
+    
+    <div class="container">
+        <div class="upload-section">
+            <div class="upload-area" id="dropArea">
+                <div class="upload-icon">📁</div>
+                <p class="upload-text">拖放文件夹到这里</p>
+                <p class="upload-hint">或</p>
+                <button class="btn" id="selectButton">选择文件夹</button>
+                <input type="file" class="file-input" id="folderInput" webkitdirectory directory multiple>
+            </div>
+            <button class="btn" id="clearButton">清除所有文件</button>
+        </div>
+        
+        <div class="content-section">
+            <div class="folder-structure">
+                <h2>文件夹结构</h2>
+                <div class="folder-tree" id="folderTree">
+                    <div class="empty-state">
+                        <div class="empty-icon">📂</div>
+                        <p>尚未选择文件夹</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="file-preview">
+                <h2>文件预览</h2>
+                <div class="file-content" id="filePreview">
+                    <div class="empty-state">
+                        <div class="empty-icon">📄</div>
+                        <p>选择文件以预览内容</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="compatibility">
+            <h3>浏览器兼容性说明</h3>
+            <p>文件夹上传功能在以下浏览器中受支持：Chrome、Edge、Firefox、Safari（部分功能）。</p>
+            <p>对于不支持文件夹上传的浏览器，您仍然可以上传单个文件。</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropArea = document.getElementById('dropArea');
+            const folderInput = document.getElementById('folderInput');
+            const selectButton = document.getElementById('selectButton');
+            const clearButton = document.getElementById('clearButton');
+            const folderTree = document.getElementById('folderTree');
+            const filePreview = document.getElementById('filePreview');
+            
+            let currentFiles = [];
+            
+            // 选择文件夹按钮点击事件
+            selectButton.addEventListener('click', function() {
+                folderInput.click();
+            });
+            
+            // 文件夹选择变化事件
+            folderInput.addEventListener('change', function(e) {
+                handleFiles(e.target.files);
+            });
+            
+            // 拖放事件处理
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropArea.classList.add('drag-over');
+            }
+            
+            function unhighlight() {
+                dropArea.classList.remove('drag-over');
+            }
+            
+            // 处理拖放文件
+            dropArea.addEventListener('drop', function(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                // 检查是否拖放了文件夹
+                if (files.length > 0) {
+                    // 注意：在大多数浏览器中，通过拖放无法直接获取文件夹结构
+                    // 这里我们模拟文件夹上传
+                    handleFiles(files);
+                }
+            });
+            
+            // 处理文件
+            function handleFiles(files) {
+                currentFiles = Array.from(files);
+                displayFolderStructure(currentFiles);
+            }
+            
+            // 显示文件夹结构
+            function displayFolderStructure(files) {
+                if (files.length === 0) {
+                    folderTree.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📂</div>
+                            <p>尚未选择文件夹</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 按路径组织文件
+                const fileTree = {};
+                
+                files.forEach(file => {
+                    // 在真实场景中，webkitRelativePath 会包含文件夹结构
+                    // 这里我们模拟一个简单的文件夹结构
+                    const path = file.webkitRelativePath || file.name;
+                    const parts = path.split('/');
+                    
+                    let currentLevel = fileTree;
+                    
+                    for (let i = 0; i < parts.length; i++) {
+                        const part = parts[i];
+                        
+                        if (i === parts.length - 1) {
+                            // 这是文件
+                            currentLevel[part] = file;
+                        } else {
+                            // 这是文件夹
+                            if (!currentLevel[part]) {
+                                currentLevel[part] = {};
+                            }
+                            currentLevel = currentLevel[part];
+                        }
+                    }
+                });
+                
+                // 生成文件夹树HTML
+                folderTree.innerHTML = generateTreeHTML(fileTree);
+                
+                // 添加文件点击事件
+                document.querySelectorAll('.file-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const fileName = this.getAttribute('data-file');
+                        const file = files.find(f => f.name === fileName);
+                        
+                        if (file) {
+                            previewFile(file);
+                            
+                            // 高亮选中的文件
+                            document.querySelectorAll('.file-item').forEach(i => {
+                                i.classList.remove('selected');
+                            });
+                            this.classList.add('selected');
+                        }
+                    });
+                });
+            }
+            
+            // 生成文件夹树HTML
+            function generateTreeHTML(tree, level = 0) {
+                let html = '';
+                
+                for (const key in tree) {
+                    if (tree[key] instanceof File) {
+                        // 文件
+                        html += `
+                            <div class="folder-item file-item" data-file="${tree[key].name}">
+                                ${'&nbsp;'.repeat(level * 4)}<span class="file-icon">📄</span> ${key}
+                            </div>
+                        `;
+                    } else {
+                        // 文件夹
+                        html += `
+                            <div class="folder-item">
+                                ${'&nbsp;'.repeat(level * 4)}<span class="folder-icon">📁</span> ${key}/
+                            </div>
+                            ${generateTreeHTML(tree[key], level + 1)}
+                        `;
+                    }
+                }
+                
+                return html;
+            }
+            
+            // 预览文件内容
+            function previewFile(file) {
+                if (file.type.startsWith('image/')) {
+                    // 图片文件
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        filePreview.innerHTML = `<img src="${e.target.result}" alt="${file.name}" style="max-width: 100%;">`;
+                    };
+                    reader.readAsDataURL(file);
+                } else if (file.type.startsWith('text/') || 
+                          file.name.endsWith('.js') || 
+                          file.name.endsWith('.html') || 
+                          file.name.endsWith('.css')) {
+                    // 文本文件
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        filePreview.textContent = e.target.result;
+                    };
+                    reader.readAsText(file);
+                } else {
+                    // 其他文件类型
+                    filePreview.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📄</div>
+                            <p>无法预览此文件类型</p>
+                            <p>文件名: ${file.name}</p>
+                            <p>文件大小: ${(file.size / 1024).toFixed(2)} KB</p>
+                            <p>文件类型: ${file.type || '未知'}</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 清除所有文件
+            clearButton.addEventListener('click', function() {
+                currentFiles = [];
+                folderInput.value = '';
+                displayFolderStructure([]);
+                filePreview.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📄</div>
+                        <p>选择文件以预览内容</p>
+                    </div>
+                `;
+            });
+        });
+    </script>
+</body>
+</html>

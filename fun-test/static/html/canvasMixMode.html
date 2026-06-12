@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas混合模式与区域调试器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+        }
+
+        .controls {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .canvas-container {
+            flex: 2;
+            min-width: 500px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        canvas {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            max-width: 100%;
+            cursor: move;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 8px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .color-inputs {
+            display: flex;
+            gap: 15px;
+        }
+
+        .color-input {
+            flex: 1;
+        }
+
+        .color-preview {
+            width: 100%;
+            height: 40px;
+            border-radius: 8px;
+            margin-top: 5px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .info-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .rect-size-controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        .size-input {
+            flex: 1;
+        }
+
+        .coordinates {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        .mode-description {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            font-size: 0.85rem;
+            min-height: 60px;
+        }
+
+        @media (max-width: 900px) {
+            .content {
+                flex-direction: column;
+            }
+
+            .controls,
+            .canvas-container {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Canvas混合模式与区域调试器</h1>
+            <p class="subtitle">拖动矩形查看图片的不同区域，并观察混合效果</p>
+        </header>
+
+        <div class="content">
+            <div class="controls">
+                <div class="control-group">
+                    <h2>混合模式</h2>
+                    <select id="blendMode">
+                        <!-- 12种标准混合模式 -->
+                        <option value="source-over">source-over (默认覆盖)</option>
+                        <option value="source-in">source-in (源图像内部)</option>
+                        <option value="source-out">source-out (源图像外部)</option>
+                        <option value="source-atop">source-atop (源图像顶部)</option>
+                        <option value="destination-over">destination-over (目标覆盖)</option>
+                        <option value="destination-in">destination-in (目标内部)</option>
+                        <option value="destination-out">destination-out (目标外部)</option>
+                        <option value="destination-atop">destination-atop (目标顶部)</option>
+                        <option value="lighter">lighter (变亮)</option>
+                        <option value="copy">copy (复制)</option>
+                        <option value="xor">xor (异或)</option>
+                        <option value="multiply">multiply (正片叠底)</option>
+                        <option value="screen">screen (滤色)</option>
+                        <option value="overlay">overlay (叠加)</option>
+                        <option value="darken">darken (变暗)</option>
+                        <option value="lighten">lighten (变亮)</option>
+                        <option value="color-dodge">color-dodge (颜色减淡)</option>
+                        <option value="color-burn">color-burn (颜色加深)</option>
+                        <option value="hard-light">hard-light (强光)</option>
+                        <option value="soft-light">soft-light (柔光)</option>
+                        <option value="difference">difference (差值)</option>
+                        <option value="exclusion">exclusion (排除)</option>
+                        <option value="hue">hue (色相)</option>
+                        <option value="saturation">saturation (饱和度)</option>
+                        <option value="color">color (颜色)</option>
+                        <option value="luminosity">luminosity (亮度)</option>
+                    </select>
+                    <div class="mode-description" id="modeDescription">
+                        这是默认的合成模式，新绘制的图像会覆盖在已有图像的上方。
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h2>矩形设置</h2>
+                    <div class="color-inputs">
+                        <div class="color-input">
+                            <label for="rectColor">矩形颜色</label>
+                            <input type="color" id="rectColor" value="#3498db">
+                            <div class="color-preview" id="previewRect"></div>
+                        </div>
+                        <div class="color-input">
+                            <label for="bgColor">背景颜色</label>
+                            <input type="color" id="bgColor" value="#2c3e50">
+                            <div class="color-preview" id="previewBg"></div>
+                        </div>
+                    </div>
+
+                    <div class="rect-size-controls">
+                        <div class="size-input">
+                            <label for="rectWidth">矩形宽度: <span id="widthValue">150</span></label>
+                            <input type="range" id="rectWidth" min="50" max="300" value="150">
+                        </div>
+                        <div class="size-input">
+                            <label for="rectHeight">矩形高度: <span id="heightValue">150</span></label>
+                            <input type="range" id="rectHeight" min="50" max="300" value="150">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h2>透明度</h2>
+                    <label for="opacity">矩形透明度: <span id="opacityValue">0.7</span></label>
+                    <input type="range" id="opacity" min="0" max="1" step="0.01" value="0.7">
+                </div>
+
+                <div class="control-group">
+                    <h2>图片选择</h2>
+                    <select id="imageSelect">
+                        <option value="pattern1">几何图案</option>
+                        <option value="pattern2">渐变纹理</option>
+                        <option value="custom">自定义图片</option>
+                    </select>
+                    <input type="file" id="customImage" accept="image/*" style="display: none;">
+                </div>
+
+                <div class="info-box">
+                    <h3>使用说明</h3>
+                    <p>1. 拖动矩形查看图片的不同区域</p>
+                    <p>2. 调整混合模式观察不同效果</p>
+                    <p>3. 自定义矩形颜色、大小和透明度</p>
+                    <p>4. 矩形区域外的图片将被隐藏</p>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <h2>混合效果预览</h2>
+                <canvas id="blendCanvas" width="600" height="400"></canvas>
+                <div class="coordinates">
+                    <span>矩形位置: (<span id="rectX">150</span>, <span id="rectY">125</span>)</span>
+                    <span>矩形大小: <span id="rectSize">150×150</span></span>
+                </div>
+                <div class="info-box">
+                    <p id="currentMode">当前模式: source-over</p>
+                    <p>矩形区域内的图片与矩形颜色混合显示</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const canvas = document.getElementById('blendCanvas');
+        const ctx = canvas.getContext('2d');
+        const blendModeSelect = document.getElementById('blendMode');
+        const modeDescription = document.getElementById('modeDescription');
+        const rectColorInput = document.getElementById('rectColor');
+        const bgColorInput = document.getElementById('bgColor');
+        const opacityInput = document.getElementById('opacity');
+        const opacityValue = document.getElementById('opacityValue');
+        const previewRect = document.getElementById('previewRect');
+        const previewBg = document.getElementById('previewBg');
+        const currentMode = document.getElementById('currentMode');
+        const rectWidthInput = document.getElementById('rectWidth');
+        const rectHeightInput = document.getElementById('rectHeight');
+        const widthValue = document.getElementById('widthValue');
+        const heightValue = document.getElementById('heightValue');
+        const rectXSpan = document.getElementById('rectX');
+        const rectYSpan = document.getElementById('rectY');
+        const rectSizeSpan = document.getElementById('rectSize');
+        const imageSelect = document.getElementById('imageSelect');
+        const customImageInput = document.getElementById('customImage');
+
+        // 混合模式描述
+        const modeDescriptions = {
+            'source-over': '这是默认的合成模式，新绘制的图像会覆盖在已有图像的上方。',
+            'source-in': '只有新绘制的图像与已有图像重叠的部分会被保留，其他部分会被透明化。',
+            'source-out': '只有新绘制的图像与已有图像不重叠的部分会被保留，其他部分会被透明化。',
+            'source-atop': '新绘制的图像会覆盖在已有图像的上方，但只有与已有图像重叠的部分会被保留，其他部分会被透明化。',
+            'destination-over': '新绘制的图像会位于已有图像的下方。',
+            'destination-in': '只有已有图像与新绘制的图像重叠的部分会被保留，其他部分会被透明化。',
+            'destination-out': '只有已有图像与新绘制的图像不重叠的部分会被保留，其他部分会被透明化。',
+            'destination-atop': '已有图像会位于新绘制的图像的下方，但只有与新绘制的图像重叠的部分会被保留，其他部分会被透明化。',
+            'lighter': '重叠部分的颜色值相加，产生更亮的颜色。',
+            'copy': '只显示新绘制的图像，完全忽略已有图像。',
+            'xor': '重叠部分会变成透明，非重叠部分正常显示。',
+            'multiply': '正片叠底模式，颜色值相乘，通常会产生更暗的效果。',
+            'screen': '滤色模式，颜色值反转后相乘再反转，通常会产生更亮的效果。',
+            'overlay': '叠加模式，根据底色决定执行正片叠底还是滤色。',
+            'darken': '变暗模式，取两个颜色中较暗的作为结果。',
+            'lighten': '变亮模式，取两个颜色中较亮的作为结果。',
+            'color-dodge': '颜色减淡模式，通过减小对比度来加亮底色。',
+            'color-burn': '颜色加深模式，通过增加对比度来变暗底色。',
+            'hard-light': '强光模式，根据源颜色决定执行正片叠底还是滤色。',
+            'soft-light': '柔光模式，类似强光但效果更柔和。',
+            'difference': '差值模式，从较亮的颜色中减去较暗的颜色。',
+            'exclusion': '排除模式，类似差值但对比度更低。',
+            'hue': '色相模式，使用源颜色的色相和目标颜色的饱和度、亮度。',
+            'saturation': '饱和度模式，使用源颜色的饱和度和目标颜色的色相、亮度。',
+            'color': '颜色模式，使用源颜色的色相、饱和度和目标颜色的亮度。',
+            'luminosity': '亮度模式，使用源颜色的亮度和目标颜色的色相、饱和度。'
+        };
+
+        // 初始化矩形对象
+        const rect = {
+            x: 150,
+            y: 125,
+            width: 150,
+            height: 150,
+            isDragging: false,
+            dragOffsetX: 0,
+            dragOffsetY: 0
+        };
+
+        let backgroundImage = new Image();
+        let useCustomImage = false;
+        let customImage = null;
+
+        // 创建示例图片
+        function createPatternImage() {
+            const patternCanvas = document.createElement('canvas');
+            patternCanvas.width = 600;
+            patternCanvas.height = 400;
+            const patternCtx = patternCanvas.getContext('2d');
+
+            // 绘制几何图案
+            patternCtx.fillStyle = '#34495e';
+            patternCtx.fillRect(0, 0, patternCanvas.width, patternCanvas.height);
+
+            // 绘制网格
+            patternCtx.strokeStyle = '#2c3e50';
+            patternCtx.lineWidth = 1;
+            for (let x = 0; x < patternCanvas.width; x += 20) {
+                patternCtx.beginPath();
+                patternCtx.moveTo(x, 0);
+                patternCtx.lineTo(x, patternCanvas.height);
+                patternCtx.stroke();
+            }
+            for (let y = 0; y < patternCanvas.height; y += 20) {
+                patternCtx.beginPath();
+                patternCtx.moveTo(0, y);
+                patternCtx.lineTo(patternCanvas.width, y);
+                patternCtx.stroke();
+            }
+
+            // 绘制彩色圆形
+            const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6'];
+            for (let i = 0; i < 50; i++) {
+                const x = Math.random() * patternCanvas.width;
+                const y = Math.random() * patternCanvas.height;
+                const radius = 10 + Math.random() * 30;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+
+                patternCtx.fillStyle = color;
+                patternCtx.beginPath();
+                patternCtx.arc(x, y, radius, 0, Math.PI * 2);
+                patternCtx.fill();
+
+                patternCtx.strokeStyle = 'white';
+                patternCtx.lineWidth = 2;
+                patternCtx.stroke();
+            }
+
+            return patternCanvas;
+        }
+
+        function createGradientImage() {
+            const gradientCanvas = document.createElement('canvas');
+            gradientCanvas.width = 600;
+            gradientCanvas.height = 400;
+            const gradientCtx = gradientCanvas.getContext('2d');
+
+            // 创建渐变背景
+            const gradient = gradientCtx.createLinearGradient(0, 0, gradientCanvas.width, gradientCanvas.height);
+            gradient.addColorStop(0, '#1a2a6c');
+            gradient.addColorStop(0.5, '#b21f1f');
+            gradient.addColorStop(1, '#fdbb2d');
+
+            gradientCtx.fillStyle = gradient;
+            gradientCtx.fillRect(0, 0, gradientCanvas.width, gradientCanvas.height);
+
+            // 添加纹理
+            gradientCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            for (let i = 0; i < 200; i++) {
+                const x = Math.random() * gradientCanvas.width;
+                const y = Math.random() * gradientCanvas.height;
+                const size = 5 + Math.random() * 15;
+
+                gradientCtx.beginPath();
+                gradientCtx.arc(x, y, size, 0, Math.PI * 2);
+                gradientCtx.fill();
+            }
+
+            return gradientCanvas;
+        }
+
+        // 更新颜色预览
+        function updateColorPreviews() {
+            previewRect.style.backgroundColor = rectColorInput.value;
+            previewBg.style.backgroundColor = bgColorInput.value;
+        }
+
+        // 更新模式描述
+        function updateModeDescription() {
+            const mode = blendModeSelect.value;
+            modeDescription.textContent = modeDescriptions[mode] || '该混合模式的描述暂未提供。';
+        }
+
+        // 绘制场景
+        function drawScene() {
+            console.log('重绘了')
+            // 清除画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制背景色（始终显示）
+            ctx.fillStyle = bgColorInput.value;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 设置矩形的混合模式和透明度
+            ctx.globalCompositeOperation = blendModeSelect.value;
+            ctx.globalAlpha = parseFloat(opacityInput.value);
+
+            // 绘制矩形（与背景色混合）
+            ctx.fillStyle = rectColorInput.value;
+            ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+
+            // 重置混合模式和透明度
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1.0;
+
+            // 保存当前状态
+            ctx.save();
+
+            // 创建剪切路径（只显示矩形区域）
+            ctx.beginPath();
+            ctx.rect(rect.x, rect.y, rect.width, rect.height);
+            ctx.clip();
+
+            // 在剪切区域内绘制背景图片
+            if (useCustomImage && customImage) {
+                ctx.drawImage(customImage, 0, 0, canvas.width, canvas.height);
+            } else {
+                ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+            }
+
+            // 恢复状态（移除剪切路径）
+            ctx.restore();
+
+            // 绘制矩形边框
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+
+            // 绘制拖动点
+            ctx.fillStyle = 'white';
+            ctx.fillRect(rect.x + rect.width - 5, rect.y + rect.height - 5, 10, 10);
+
+            // 更新显示信息
+            currentMode.textContent = `当前模式: ${blendModeSelect.value}`;
+            rectXSpan.textContent = Math.round(rect.x);
+            rectYSpan.textContent = Math.round(rect.y);
+            rectSizeSpan.textContent = `${rect.width}×${rect.height}`;
+        }
+        // 检查点是否在矩形内
+        function isPointInRect(x, y) {
+            return x >= rect.x && x <= rect.x + rect.width &&
+                y >= rect.y && y <= rect.y + rect.height;
+        }
+
+        // 鼠标事件处理
+        canvas.addEventListener('mousedown', (e) => {
+            const canvasRect = canvas.getBoundingClientRect();
+            const x = e.clientX - canvasRect.left;
+            const y = e.clientY - canvasRect.top;
+
+            if (isPointInRect(x, y)) {
+                rect.isDragging = true;
+                rect.dragOffsetX = x - rect.x;
+                rect.dragOffsetY = y - rect.y;
+                canvas.style.cursor = 'grabbing';
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const canvasRect = canvas.getBoundingClientRect();
+            const x = e.clientX - canvasRect.left;
+            const y = e.clientY - canvasRect.top;
+
+            if (rect.isDragging) {
+                rect.x = x - rect.dragOffsetX;
+                rect.y = y - rect.dragOffsetY;
+
+                // 限制矩形在画布内
+                rect.x = Math.max(0, Math.min(canvas.width - rect.width, rect.x));
+                rect.y = Math.max(0, Math.min(canvas.height - rect.height, rect.y));
+
+                drawScene();
+            } else if (isPointInRect(x, y)) {
+                canvas.style.cursor = 'grab';
+            } else {
+                canvas.style.cursor = 'move';
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            rect.isDragging = false;
+            canvas.style.cursor = 'move';
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            rect.isDragging = false;
+            canvas.style.cursor = 'move';
+        });
+
+        // 触摸事件处理（移动设备）
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const canvasRect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const x = touch.clientX - canvasRect.left;
+            const y = touch.clientY - canvasRect.top;
+
+            if (isPointInRect(x, y)) {
+                rect.isDragging = true;
+                rect.dragOffsetX = x - rect.x;
+                rect.dragOffsetY = y - rect.y;
+            }
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (rect.isDragging) {
+                const canvasRect = canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                const x = touch.clientX - canvasRect.left;
+                const y = touch.clientY - canvasRect.top;
+
+                rect.x = x - rect.dragOffsetX;
+                rect.y = y - rect.dragOffsetY;
+
+                // 限制矩形在画布内
+                rect.x = Math.max(0, Math.min(canvas.width - rect.width, rect.x));
+                rect.y = Math.max(0, Math.min(canvas.height - rect.height, rect.y));
+
+                drawScene();
+            }
+        });
+
+        canvas.addEventListener('touchend', () => {
+            rect.isDragging = false;
+        });
+
+        // 事件监听
+        blendModeSelect.addEventListener('change', function () {
+            updateModeDescription();
+            drawScene();
+        });
+        rectColorInput.addEventListener('input', function () {
+            updateColorPreviews();
+            drawScene();
+        });
+        bgColorInput.addEventListener('input', function () {
+            updateColorPreviews();
+            drawScene();
+        });
+        opacityInput.addEventListener('input', function () {
+            opacityValue.textContent = opacityInput.value;
+            drawScene();
+        });
+        rectWidthInput.addEventListener('input', function () {
+            rect.width = parseInt(rectWidthInput.value);
+            widthValue.textContent = rect.width;
+            drawScene();
+        });
+        rectHeightInput.addEventListener('input', function () {
+            rect.height = parseInt(rectHeightInput.value);
+            heightValue.textContent = rect.height;
+            drawScene();
+        });
+
+        imageSelect.addEventListener('change', function () {
+            if (imageSelect.value === 'custom') {
+                customImageInput.style.display = 'block';
+                customImageInput.click();
+            } else {
+                customImageInput.style.display = 'none';
+                useCustomImage = false;
+
+                if (imageSelect.value === 'pattern1') {
+                    backgroundImage = createPatternImage();
+                } else if (imageSelect.value === 'pattern2') {
+                    backgroundImage = createGradientImage();
+                }
+
+                drawScene();
+            }
+        });
+
+        customImageInput.addEventListener('change', function (e) {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    customImage = new Image();
+                    customImage.onload = function () {
+                        useCustomImage = true;
+                        drawScene();
+                    };
+                    customImage.src = event.target.result;
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // 初始化
+        backgroundImage = createPatternImage();
+        updateColorPreviews();
+        updateModeDescription();
+        drawScene();
+    </script>
+</body>
+
+</html>

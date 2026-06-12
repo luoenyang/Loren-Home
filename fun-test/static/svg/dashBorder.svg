@@ -1,0 +1,55 @@
+<!-- 实线 -->
+<svg width="1080" height="1080" xmlns="http://www.w3.org/2000/svg">
+    <circle
+    cx="540"
+    cy="540"
+    r="530"
+    fill="none"
+    stroke="white"
+    stroke-width="20"
+    />
+</svg>
+
+
+<!-- 虚线 方形端点-->
+<!-- <svg width="1080" height="1080" xmlns="http://www.w3.org/2000/svg">
+    <circle
+    cx="540"
+    cy="540"
+    r="530"
+    fill="none"
+    stroke="white"
+    stroke-width="20"
+    stroke-dasharray="80,20" 
+    stroke-linecap="butt"
+    />
+</svg> -->
+
+<!-- 虚线/点状线 圆形端点-延伸 -->
+<!-- <svg width="1080" height="1080" xmlns="http://www.w3.org/2000/svg">
+    <circle
+    cx="540"
+    cy="540"
+    r="530"
+    fill="none"
+    stroke="white"
+    stroke-width="20"
+    stroke-dasharray="80,40"
+    stroke-linecap="round"
+    />
+</svg> -->
+
+<!-- 虚线 方形端点-延伸 -->
+<!-- <svg width="1080" height="1080" xmlns="http://www.w3.org/2000/svg">
+    <circle
+    cx="540"
+    cy="540"
+    r="530"
+    fill="none"
+    stroke="white"
+    stroke-width="20"
+    stroke-dasharray="80,40"
+    stroke-linecap="square"
+    />
+</svg> -->
+

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fabric.js 打字机效果</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            font-weight: 600;
+        }
+        
+        .canvas-container {
+            width: 100%;
+            height: 300px;
+            margin: 20px 0;
+            border: 2px solid #4a90e2;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #1e1e2f;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #4a90e2, #63b3ed);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+        
+        input[type="range"] {
+            width: 200px;
+        }
+        
+        .text-input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border: 1px solid #4a90e2;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+        }
+        
+        .text-input::placeholder {
+            color: #aaa;
+        }
+        
+        .description {
+            margin-top: 20px;
+            line-height: 1.6;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .code-block {
+            background: #2d2d44;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fabric.js 打字机效果动画</h1>
+        
+        <div class="canvas-container">
+            <canvas id="typewriterCanvas"></canvas>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn">开始打字</button>
+            <button id="pauseBtn" disabled>暂停</button>
+            <button id="resetBtn">重置</button>
+        </div>
+        
+        <div class="speed-control">
+            <label for="speedControl">打字速度:</label>
+            <input type="range" id="speedControl" min="20" max="300" value="150">
+            <span id="speedValue">中速</span>
+        </div>
+        
+        <input type="text" id="textInput" class="text-input" placeholder="输入您想要显示的文本..." value="fabric文字模拟传统打字机的动画效果。">
+        
+        <div class="description">
+            <p>这个示例展示了如何使用Fabric.js创建打字机效果的动画。文本会逐字显示，并带有光标闪烁效果。</p>
+            <p>您可以通过上方的控件调整打字速度，并输入自定义文本。</p>
+        </div>
+        
+        <div class="code-block">
+            <p>核心代码逻辑：</p>
+            <pre>
+// 创建文本对象
+const text = new fabric.Text('', {
+    left: 50,
+    top: 100,
+    fontSize: 24,
+    fill: 'white',
+    fontFamily: 'Courier New'
+});
+
+// 打字机动画函数
+function typeWriter() {
+    if (currentIndex < fullText.length) {
+        text.set('text', fullText.substring(0, currentIndex + 1));
+        canvas.renderAll();
+        currentIndex++;
+        typeTimeout = setTimeout(typeWriter, typingSpeed);
+    } else {
+        isTyping = false;
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+    }
+}
+            </pre>
+        </div>
+    </div>
+
+    <script>
+        // 初始化画布
+        const canvas = new fabric.Canvas('typewriterCanvas', {
+            width: document.querySelector('.canvas-container').clientWidth,
+            height: 300,
+            backgroundColor: '#1e1e2f'
+        });
+
+        // 变量初始化
+        let fullText = '';
+        let currentIndex = 0;
+        let isTyping = false;
+        let typeTimeout = null;
+        let typingSpeed = 100; // 默认速度
+
+        // 创建文本对象
+        const text = new fabric.Text('', {
+            left: 50,
+            top: 100,
+            fontSize: 24,
+            fill: 'white',
+            fontFamily: 'Courier New'
+        });
+        canvas.add(text);
+
+        // 创建光标对象
+        const cursor = new fabric.Rect({
+            left: 50,
+            top: 98,
+            width: 2,
+            height: 30,
+            fill: 'white'
+        });
+        canvas.add(cursor);
+
+        // 光标闪烁动画
+        let cursorVisible = true;
+        function blinkCursor() {
+            cursor.set('opacity', cursorVisible ? 1 : 0);
+            canvas.renderAll();
+            cursorVisible = !cursorVisible;
+            setTimeout(blinkCursor, 500);
+        }
+        blinkCursor();
+
+        // 获取DOM元素
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const speedControl = document.getElementById('speedControl');
+        const speedValue = document.getElementById('speedValue');
+        const textInput = document.getElementById('textInput');
+
+        // 打字机动画函数
+        function typeWriter() {
+            if (currentIndex < fullText.length) {
+                text.set('text', fullText.substring(0, currentIndex + 1));
+                
+                // 更新光标位置
+                const textWidth = text.calcTextWidth();
+                cursor.set('left', 50 + textWidth);
+                
+                canvas.renderAll();
+                currentIndex++;
+                typeTimeout = setTimeout(typeWriter, typingSpeed);
+            } else {
+                isTyping = false;
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+                cursor.set('opacity', 0); // 完成时隐藏光标
+                canvas.renderAll();
+            }
+        }
+
+        // 开始打字
+        startBtn.addEventListener('click', function() {
+            if (!isTyping) {
+                fullText = textInput.value || '请输入文本内容...';
+                if (currentIndex >= fullText.length) {
+                    currentIndex = 0;
+                }
+                
+                isTyping = true;
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                cursor.set('opacity', 1);
+                typeWriter();
+            }
+        });
+
+        // 暂停打字
+        pauseBtn.addEventListener('click', function() {
+            if (isTyping) {
+                clearTimeout(typeTimeout);
+                isTyping = false;
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+            }
+        });
+
+        // 重置
+        resetBtn.addEventListener('click', function() {
+            clearTimeout(typeTimeout);
+            isTyping = false;
+            currentIndex = 0;
+            text.set('text', '');
+            cursor.set('left', 50);
+            cursor.set('opacity', 1);
+            canvas.renderAll();
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+        });
+
+        // 速度控制
+        speedControl.addEventListener('input', function() {
+            typingSpeed = 320 - this.value; // 反转值，使滑块向右移动时速度更快
+            
+            // 更新速度标签
+            if (this.value < 70) {
+                speedValue.textContent = '极慢';
+            } else if (this.value < 150) {
+                speedValue.textContent = '慢速';
+            } else if (this.value < 230) {
+                speedValue.textContent = '中速';
+            } else {
+                speedValue.textContent = '快速';
+            }
+        });
+
+        // 窗口大小变化时调整画布
+        window.addEventListener('resize', function() {
+            canvas.setWidth(document.querySelector('.canvas-container').clientWidth);
+            canvas.renderAll();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas画面变形特效</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            max-width: 800px;
+        }
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        .description {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 30px;
+            max-width: 1200px;
+        }
+        .canvas-card {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            width: 350px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+        .canvas-card:hover {
+            transform: translateY(-5px);
+        }
+        .canvas-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #ff9d00;
+        }
+        canvas {
+            background: #0f1c30;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        .controls {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label {
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        .value {
+            color: #ff9d00;
+            font-weight: bold;
+        }
+        input[type="range"] {
+            width: 100%;
+            accent-color: #ff9d00;
+        }
+        button {
+            background: linear-gradient(to right, #ff9d00, #ff0080);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 157, 0, 0.5);
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Canvas画面变形特效</h1>
+        <p class="description">探索三种不同的Canvas变形效果：波浪扭曲、波纹扩散和网格变形。调整参数查看不同效果，点击画布可以触发特殊互动效果。</p>
+    </header>
+
+    <div class="container">
+        <div class="canvas-card">
+            <h2 class="canvas-title">波浪扭曲效果</h2>
+            <canvas id="waveCanvas" width="300" height="200"></canvas>
+            <div class="controls">
+                <div class="slider-container">
+                    <label>
+                        <span>波浪幅度</span>
+                        <span id="waveAmplitudeValue" class="value">15</span>
+                    </label>
+                    <input type="range" id="waveAmplitude" min="5" max="30" value="15">
+                </div>
+                <div class="slider-container">
+                    <label>
+                        <span>波浪速度</span>
+                        <span id="waveSpeedValue" class="value">0.05</span>
+                    </label>
+                    <input type="range" id="waveSpeed" min="1" max="20" value="5">
+                </div>
+                <button id="resetWave">重置波浪效果</button>
+            </div>
+        </div>
+
+        <div class="canvas-card">
+            <h2 class="canvas-title">波纹扩散效果</h2>
+            <canvas id="rippleCanvas" width="300" height="200"></canvas>
+            <div class="controls">
+                <div class="slider-container">
+                    <label>
+                        <span>波纹强度</span>
+                        <span id="rippleIntensityValue" class="value">20</span>
+                    </label>
+                    <input type="range" id="rippleIntensity" min="5" max="40" value="20">
+                </div>
+                <div class="slider-container">
+                    <label>
+                        <span>衰减速度</span>
+                        <span id="rippleDecayValue" class="value">0.95</span>
+                    </label>
+                    <input type="range" id="rippleDecay" min="85" max="99" value="95">
+                </div>
+                <button id="addRipple">添加波纹</button>
+            </div>
+        </div>
+
+        <div class="canvas-card">
+            <h2 class="canvas-title">网格变形效果</h2>
+            <canvas id="gridCanvas" width="300" height="200"></canvas>
+            <div class="controls">
+                <div class="slider-container">
+                    <label>
+                        <span>变形强度</span>
+                        <span id="gridIntensityValue" class="value">30</span>
+                    </label>
+                    <input type="range" id="gridIntensity" min="10" max="50" value="30">
+                </div>
+                <div class="slider-container">
+                    <label>
+                        <span>网格密度</span>
+                        <span id="gridDensityValue" class="value">15</span>
+                    </label>
+                    <input type="range" id="gridDensity" min="5" max="25" value="15">
+                </div>
+                <button id="changeGrid">切换网格模式</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Canvas变形特效演示 - 点击画布可以触发互动效果</p>
+    </div>
+
+    <script>
+        // 初始化画布和上下文
+        const waveCanvas = document.getElementById('waveCanvas');
+        const waveCtx = waveCanvas.getContext('2d');
+        const rippleCanvas = document.getElementById('rippleCanvas');
+        const rippleCtx = rippleCanvas.getContext('2d');
+        const gridCanvas = document.getElementById('gridCanvas');
+        const gridCtx = gridCanvas.getContext('2d');
+
+        // 绘制基础图像函数
+        function drawBaseImage(ctx, text) {
+            const width = ctx.canvas.width;
+            const height = ctx.canvas.height;
+            
+            // 清除画布
+            ctx.clearRect(0, 0, width, height);
+            
+            // 绘制渐变背景
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, '#1e3c72');
+            gradient.addColorStop(1, '#2a5298');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+            
+            // 绘制中心圆形
+            ctx.fillStyle = '#ff9d00';
+            ctx.beginPath();
+            ctx.arc(width/2, height/2, 40, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 绘制文字
+            ctx.fillStyle = 'white';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(text, width/2, height - 20);
+            
+            // 绘制一些随机形状
+            // for (let i = 0; i < 5; i++) {
+            //     ctx.fillStyle = `hsl(${Math.random() * 360}, 70%, 60%)`;
+            //     const x = Math.random() * width;
+            //     const y = Math.random() * height;
+            //     const size = 10 + Math.random() * 20;
+                
+            //     if (i % 2 === 0) {
+            //         ctx.beginPath();
+            //         ctx.arc(x, y, size, 0, Math.PI * 2);
+            //         ctx.fill();
+            //     } else {
+            //         ctx.fillRect(x, y, size, size);
+            //     }
+            // }
+        }
+
+        // 初始化三个画布
+        drawBaseImage(waveCtx, '波浪扭曲效果');
+        drawBaseImage(rippleCtx, '波纹扩散效果');
+        drawBaseImage(gridCtx, '网格变形效果');
+
+        // 波浪效果实现
+        let waveTime = 0;
+        let waveAmplitude = 15;
+        let waveSpeed = 0.05;
+        let isWaveActive = true;
+
+        function animateWave() {
+            if (!isWaveActive) return;
+            
+            const width = waveCanvas.width;
+            const height = waveCanvas.height;
+            
+            // 绘制基础图像
+            drawBaseImage(waveCtx, '波浪扭曲效果');
+            
+            // 获取图像数据
+            const imageData = waveCtx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            
+            // 创建新的图像数据
+            const newImageData = waveCtx.createImageData(width, height);
+            const newData = newImageData.data;
+            
+            // 应用波浪效果
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    // 计算波浪偏移
+                    const xOffset = Math.sin(y * 0.05 + waveTime) * waveAmplitude;
+                    const yOffset = Math.cos(x * 0.03 + waveTime) * waveAmplitude * 0.5;
+                    
+                    const newX = Math.max(0, Math.min(width - 1, x + xOffset));
+                    const newY = Math.max(0, Math.min(height - 1, y + yOffset));
+                    
+                    // 获取原始像素位置
+                    const index = (y * width + x) * 4;
+                    const newIndex = (Math.floor(newY) * width + Math.floor(newX)) * 4;
+                    
+                    // 复制像素数据
+                    newData[index] = data[newIndex];
+                    newData[index + 1] = data[newIndex + 1];
+                    newData[index + 2] = data[newIndex + 2];
+                    newData[index + 3] = data[newIndex + 3];
+                }
+            }
+            
+            // 将处理后的图像数据放回画布
+            waveCtx.putImageData(newImageData, 0, 0);
+            
+            // 更新时间
+            waveTime += waveSpeed;
+            
+            requestAnimationFrame(animateWave);
+        }
+
+        // 启动波浪动画
+        animateWave();
+
+        // 波纹效果实现
+        let ripples = [];
+        let rippleIntensity = 20;
+        let rippleDecay = 0.95;
+
+        function animateRipple() {
+            const width = rippleCanvas.width;
+            const height = rippleCanvas.height;
+            
+            // 绘制基础图像
+            drawBaseImage(rippleCtx, '波纹扩散效果');
+            
+            if (ripples.length > 0) {
+                // 获取图像数据
+                const imageData = rippleCtx.getImageData(0, 0, width, height);
+                const data = imageData.data;
+                
+                // 创建新的图像数据
+                const newImageData = rippleCtx.createImageData(width, height);
+                const newData = newImageData.data;
+                
+                // 应用所有波纹效果
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let xOffset = 0;
+                        let yOffset = 0;
+                        
+                        // 计算所有波纹的叠加效果
+                        for (const ripple of ripples) {
+                            const dx = x - ripple.x;
+                            const dy = y - ripple.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (distance < ripple.radius && distance > ripple.radius - 20) {
+                                const force = ripple.strength * Math.cos((distance - ripple.radius) * 0.2);
+                                xOffset += (dx / distance) * force;
+                                yOffset += (dy / distance) * force;
+                            }
+                        }
+                        
+                        const newX = Math.max(0, Math.min(width - 1, x + xOffset));
+                        const newY = Math.max(0, Math.min(height - 1, y + yOffset));
+                        
+                        // 获取原始像素位置
+                        const index = (y * width + x) * 4;
+                        const newIndex = (Math.floor(newY) * width + Math.floor(newX)) * 4;
+                        
+                        // 复制像素数据
+                        newData[index] = data[newIndex];
+                        newData[index + 1] = data[newIndex + 1];
+                        newData[index + 2] = data[newIndex + 2];
+                        newData[index + 3] = data[newIndex + 3];
+                    }
+                }
+                
+                // 将处理后的图像数据放回画布
+                rippleCtx.putImageData(newImageData, 0, 0);
+                
+                // 更新波纹状态
+                for (let i = ripples.length - 1; i >= 0; i--) {
+                    ripples[i].radius += 2;
+                    ripples[i].strength *= rippleDecay;
+                    
+                    if (ripples[i].strength < 0.1) {
+                        ripples.splice(i, 1);
+                    }
+                }
+            }
+            requestAnimationFrame(animateRipple);
+        }
+
+        // 启动波纹动画
+        animateRipple();
+
+        // 网格变形效果实现
+        let gridIntensity = 30;
+        let gridDensity = 15;
+        let gridMode = 0;
+
+        function animateGrid() {
+            const width = gridCanvas.width;
+            const height = gridCanvas.height;
+            
+            // 绘制基础图像
+            drawBaseImage(gridCtx, '网格变形效果');
+            
+            // 获取图像数据
+            const imageData = gridCtx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            
+            // 创建新的图像数据
+            const newImageData = gridCtx.createImageData(width, height);
+            const newData = newImageData.data;
+            
+            // 应用网格变形效果
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let xOffset = 0;
+                    let yOffset = 0;
+                    
+                    // 根据模式选择不同的变形效果
+                    if (gridMode === 0) {
+                        // 漩涡效果
+                        const dx = x - width/2;
+                        const dy = y - height/2;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        const angle = Math.atan2(dy, dx);
+                        
+                        xOffset = Math.cos(angle + distance / gridIntensity) * gridIntensity / 5;
+                        yOffset = Math.sin(angle + distance / gridIntensity) * gridIntensity / 5;
+                    } else if (gridMode === 1) {
+                        // 波浪网格效果
+                        xOffset = Math.sin(y / gridDensity) * gridIntensity / 2;
+                        yOffset = Math.cos(x / gridDensity) * gridIntensity / 2;
+                    } else {
+                        // 随机扭曲效果
+                        const cellX = Math.floor(x / gridDensity);
+                        const cellY = Math.floor(y / gridDensity);
+                        const random = Math.sin(cellX * 10 + cellY * 5) * gridIntensity;
+                        
+                        xOffset = (Math.random() - 0.5) * random;
+                        yOffset = (Math.random() - 0.5) * random;
+                    }
+                    
+                    const newX = Math.max(0, Math.min(width - 1, x + xOffset));
+                    const newY = Math.max(0, Math.min(height - 1, y + yOffset));
+                    
+                    // 获取原始像素位置
+                    const index = (y * width + x) * 4;
+                    const newIndex = (Math.floor(newY) * width + Math.floor(newX)) * 4;
+                    
+                    // 复制像素数据
+                    newData[index] = data[newIndex];
+                    newData[index + 1] = data[newIndex + 1];
+                    newData[index + 2] = data[newIndex + 2];
+                    newData[index + 3] = data[newIndex + 3];
+                }
+            }
+            
+            // 将处理后的图像数据放回画布
+            gridCtx.putImageData(newImageData, 0, 0);
+            
+            requestAnimationFrame(animateGrid);
+        }
+
+        // 启动网格动画
+        animateGrid();
+
+        // 添加事件监听器
+        document.getElementById('waveAmplitude').addEventListener('input', function() {
+            waveAmplitude = parseInt(this.value);
+            document.getElementById('waveAmplitudeValue').textContent = waveAmplitude;
+        });
+
+        document.getElementById('waveSpeed').addEventListener('input', function() {
+            waveSpeed = parseInt(this.value) / 100;
+            document.getElementById('waveSpeedValue').textContent = waveSpeed.toFixed(2);
+        });
+
+        document.getElementById('resetWave').addEventListener('click', function() {
+            isWaveActive = false;
+            setTimeout(() => {
+                isWaveActive = true;
+                waveTime = 0;
+                animateWave();
+            }, 100);
+        });
+
+        document.getElementById('rippleIntensity').addEventListener('input', function() {
+            rippleIntensity = parseInt(this.value);
+            document.getElementById('rippleIntensityValue').textContent = rippleIntensity;
+        });
+
+        document.getElementById('rippleDecay').addEventListener('input', function() {
+            rippleDecay = parseInt(this.value) / 100;
+            document.getElementById('rippleDecayValue').textContent = rippleDecay.toFixed(2);
+        });
+
+        document.getElementById('addRipple').addEventListener('click', function() {
+            addRipple(rippleCanvas.width / 2, rippleCanvas.height / 2);
+        });
+
+        document.getElementById('gridIntensity').addEventListener('input', function() {
+            gridIntensity = parseInt(this.value);
+            document.getElementById('gridIntensityValue').textContent = gridIntensity;
+        });
+
+        document.getElementById('gridDensity').addEventListener('input', function() {
+            gridDensity = parseInt(this.value);
+            document.getElementById('gridDensityValue').textContent = gridDensity;
+        });
+
+        document.getElementById('changeGrid').addEventListener('click', function() {
+            gridMode = (gridMode + 1) % 3;
+        });
+
+        // 添加波纹函数
+        function addRipple(x, y) {
+            ripples.push({
+                x: x,
+                y: y,
+                radius: 5,
+                strength: rippleIntensity / 5
+            });
+        }
+
+        // 画布点击添加波纹
+        rippleCanvas.addEventListener('click', function(event) {
+            const rect = rippleCanvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            addRipple(x, y);
+        });
+
+        // 波浪画布点击重置
+        waveCanvas.addEventListener('click', function() {
+            isWaveActive = false;
+            setTimeout(() => {
+                isWaveActive = true;
+                waveTime = 0;
+                animateWave();
+            }, 100);
+        });
+
+        // 网格画布点击切换模式
+        gridCanvas.addEventListener('click', function() {
+            gridMode = (gridMode + 1) % 3;
+        });
+    </script>
+</body>
+</html>

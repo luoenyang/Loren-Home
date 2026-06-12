@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Heart Mask</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <div style="width:400px;margin:0 auto">
+        <canvas id="myCanvas" width="400" height="400" ></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 绘制心型路径
+        function drawHeart(ctx, x, y, width, height) {
+            ctx.save();
+            ctx.beginPath();
+            const topCurveHeight = height * 0.3;
+            ctx.moveTo(x, y + topCurveHeight);
+            // 上左曲线
+            ctx.bezierCurveTo(
+                x, y, 
+                x - width / 2, y, 
+                x - width / 2, y + topCurveHeight
+            );
+            // 下左曲线
+            ctx.bezierCurveTo(
+                x - width / 2, y + (height + topCurveHeight) / 2, 
+                x, y + (height + topCurveHeight) / 2, 
+                x, y + height
+            );
+            // 下右曲线
+            ctx.bezierCurveTo(
+                x, y + (height + topCurveHeight) / 2, 
+                x + width / 2, y + (height + topCurveHeight) / 2, 
+                x + width / 2, y + topCurveHeight
+            );
+            // 上右曲线
+            ctx.bezierCurveTo(
+                x + width / 2, y, 
+                x, y, 
+                x, y + topCurveHeight
+            );
+            ctx.closePath();
+            ctx.restore();
+        }
+
+        // 绘制背景内容
+        function drawBackground() {
+            ctx.fillStyle = 'lightblue';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = 'yellow';
+            ctx.font = '30px Arial';
+            ctx.fillText('Hello, 显示在心型内', 100, 200);
+        }
+
+        // 绘制心型遮罩
+        function drawHeartMask() {
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-in'; // 设置遮罩模式
+            drawHeart(ctx, canvas.width / 2, canvas.height / 2 - 100, 200, 200);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // 主函数
+        function main() {
+            drawBackground();
+            drawHeartMask();
+        }
+
+        main();
+    </script>
+</body>
+</html>

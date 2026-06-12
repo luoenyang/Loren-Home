@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频转场效果（原生 WebGL）</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 20px;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h2>原生 WebGL 转场</h2>
+    <canvas id="glCanvas" width="270" height="480"></canvas>
+    <script>
+        // 创建视频元素
+        const createVideo = src => {
+            return new Promise((resolve, reject) => {
+                const video = document.createElement('video');
+                video.src = src;
+                video.preload = 'auto';
+                video.muted = true;
+                video.loop = false;
+                video.crossOrigin = 'anonymous';
+                video.oncanplaythrough = () => resolve(video);
+                video.onerror = reject;
+            });
+        };
+
+        // 加载视频
+        const url1 = '../../video/test2.mp4';
+        const url2 = '../../video/test4.mp4';
+        Promise.all([createVideo(url1), createVideo(url2)]).then(videos => {
+            const canvas = document.getElementById('glCanvas');
+            const gl = canvas.getContext('webgl');
+            if (!gl) {
+                alert('WebGL not supported');
+                return;
+            }
+
+            // 顶点着色器
+            const vertexShaderSource = `
+                attribute vec4 aVertexPosition;
+                attribute vec2 aTextureCoord;
+                varying highp vec2 vTextureCoord;
+                void main(void) {
+                    gl_Position = aVertexPosition;
+                    vTextureCoord = aTextureCoord;
+                }
+            `;
+
+            // 片段着色器
+            const fragmentShaderSource = `
+                precision mediump float;
+                varying highp vec2 vTextureCoord;
+                uniform sampler2D uSampler;
+                uniform float uProgress;
+                uniform sampler2D uSampler2;
+                void main(void) {
+                    vec4 color1 = texture2D(uSampler, vTextureCoord);
+                    vec4 color2 = texture2D(uSampler2, vTextureCoord);
+                    gl_FragColor = mix(color1, color2, uProgress);
+                }
+            `;
+
+            // 编译着色器
+            const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertexShader, vertexShaderSource);
+            gl.compileShader(vertexShader);
+
+            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragmentShader, fragmentShaderSource);
+            gl.compileShader(fragmentShader);
+
+            // 创建程序
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                alert('Unable to initialize the shader program.');
+                return;
+            }
+
+            gl.useProgram(program);
+
+            // 设置顶点数据
+            const positions = [
+                // -1,  1,
+                // -1, -0.5,
+                //  0.5,  1,
+                //  0.5, -0.5,
+
+                 -1,  1,
+                -1, -0,
+                 0,  1,
+                 0, -0,
+
+                // -1,  1,
+                // -1, -1,
+                //  1,  1,
+                //  1, -1,
+            ];
+            const textureCoords = [
+                0.0,  0.0,
+                0.0,  1,
+                1,  0.0,
+                1,  1,
+            ];
+
+            const positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+            const textureCoordBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
+
+            const aVertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
+            const aTextureCoord = gl.getAttribLocation(program, 'aTextureCoord');
+            gl.enableVertexAttribArray(aVertexPosition);
+            gl.enableVertexAttribArray(aTextureCoord);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.vertexAttribPointer(aVertexPosition, 2, gl.FLOAT, false, 0, 0);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+            gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
+
+            // 创建纹理
+            const texture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+            const texture2 = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, texture2);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+            // 设置视频纹理
+            const setVideoTexture = (video, texture) => {
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+            };
+
+            // 获取 uniform 变量位置
+            const uSampler = gl.getUniformLocation(program, 'uSampler');
+            const uSampler2 = gl.getUniformLocation(program, 'uSampler2');
+            const uProgress = gl.getUniformLocation(program, 'uProgress');
+
+            // 设置视频大小和位置
+            const videoSize1 = [240, 360];
+            const videoPosition1 = [100, 100];
+            const videoSize2 = [240, 360];
+            const videoPosition2 = [200, 100];
+
+            // 绘制视频
+            const drawVideo = (progress) => {
+                gl.clearColor(0.0, 0.0, 0.0, 1.0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+
+                gl.uniform1f(uProgress, progress);
+
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.uniform1i(uSampler, 0);
+
+                gl.activeTexture(gl.TEXTURE1);
+                gl.bindTexture(gl.TEXTURE_2D, texture2);
+                gl.uniform1i(uSampler2, 1);
+
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            };
+
+            // 更新视频纹理
+            const updateTextures = () => {
+                setVideoTexture(videos[0], texture);
+                setVideoTexture(videos[1], texture2);
+            };
+
+            // 开始播放视频
+            videos.forEach(video => video.play());
+
+            // 动画循环
+            let progress = 0.0;
+            const animate = () => {
+                requestAnimationFrame(animate);
+
+                // 转场的时机和进度
+                if (videos[0].currentTime >= videos[0].duration -3) {
+                    progress = Math.min(1.0, progress + 0.01);
+                }
+
+                updateTextures();
+                console.log('progress',progress)
+                drawVideo(progress);
+            };
+
+            animate();
+        });
+    </script>
+</body>
+</html>

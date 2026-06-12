@@ -1,0 +1,168 @@
+<!--获取范围视频 流式加载 流式播放-->
+<!-- 确保moov盒位于文件开头 -->
+<!-- ffmpeg -i input.mp4 -c copy -movflags +faststart output.mp4 -->
+<!-- 查看moove信息 -->
+<!-- ffprobe -v trace -i test_moovStart.mp4 2>&1 | findstr /i moov -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        *{
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>fecth range 只能从0字节开始获取可以播放</h2>
+</body>
+
+
+<script>
+    // 直接使用<video>标签（推荐方案）
+    const videoUrl = '/video/test_moovStart.mp4';
+    const video = document.createElement('video');
+    video.controls = true;
+    // video.src = videoUrl;
+    video.style = 'margin:0 auto;display:block';
+    document.body.appendChild(video);
+
+    // 获取元信息
+    async function getVideoMetadata(url) {
+        const response = await fetch(url, { method: 'HEAD' });
+        if (!response.ok) throw new Error('Failed to fetch metadata');
+        return {
+            totalBytes: parseInt(response.headers.get('Content-Length')),
+            contentType: response.headers.get('Content-Type')
+        };
+    }
+
+
+    // 手动Range请求 + MediaSource（高级场景）
+
+    // ==================== 结合 mediaSource 未能实现播放 ======================
+    // 根据时间获取字节范围
+    // function getByteRangeForTime(totalBytes, startTime, endTime, bitrate) {
+    //     // 方法1：直接用码率计算（最准确）
+    //     const bitsPerSecond = bitrate; // 比特/秒
+    //     const bytesPerSecond = bitsPerSecond / 8; // 字节/秒
+
+    //     const startByte = Math.floor(bytesPerSecond * startTime);
+    //     const endByte = Math.ceil(bytesPerSecond * endTime) - 1; // -1 因为 Range 包含结束字节
+
+    //     // 确保不超过文件大小
+    //     const finalEndByte = Math.min(endByte, totalSize - 1);
+
+    //     return { startByte, endByte: finalEndByte };
+    // }
+
+    // async function loadPartialVideo() {
+    //     const metadata = await getVideoMetadata(videoUrl);
+    //     const range = getByteRangeForTime(metadata.totalBytes, 5, 14, 1.129 * 1024 * 1024); // 假设1.129Mbps码率
+
+    //     const mediaSource = new MediaSource();
+    //     video.src = URL.createObjectURL(mediaSource);
+
+    //     mediaSource.addEventListener('sourceopen', async () => {
+    //         const mime = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"';
+    //         if (!MediaSource.isTypeSupported(mime)) return;
+    //         const sourceBuffer = mediaSource.addSourceBuffer(mime);
+    //         const response = await fetch(videoUrl, {
+    //             // headers: { 'Range': `bytes=${range.startByte}-${range.endByte}` }
+    //             headers: { 'Range': `bytes=0-${metadata.totalBytes - 1}` }
+    //         });
+    //         // const response = await fetch(videoUrl);
+    //         const buffer = await response.arrayBuffer();
+    //         sourceBuffer.appendBuffer(buffer);
+    //     });
+    // }
+    // loadPartialVideo();
+
+
+
+    // ================== 不结合 mediaSource 可播放，但是从中间截取的话播放不了，必须从头连续请求且moov原子在mp4开头 =======================
+    // 已知参数
+    // const totalSize = 1024 * 1024 * 100; // 100MB = 总字节数
+    // const totalDuration = 600; // 总时长 600秒（10分钟）
+    // const bitrate = 1.33 * 1024 * 1024; // 1.33 Mbps = 比特/秒
+    // const startTime = 120; // 开始时间 120秒（2分钟）
+    // const endTime = 180;   // 结束时间 180秒（3分钟）
+
+    // 计算字节范围的准确方法
+    function calculateRange(bitrate, startTime, endTime, totalSize, totalDuration) {
+        // 方法1：直接用码率计算（最准确）
+        const bitsPerSecond = bitrate; // 比特/秒
+        const bytesPerSecond = bitsPerSecond / 8; // 字节/秒
+
+        const startByte = Math.floor(bytesPerSecond * startTime);
+        const endByte = Math.ceil(bytesPerSecond * endTime) - 1; // -1 因为 Range 包含结束字节
+
+        // 确保不超过文件大小
+        const finalEndByte = Math.min(endByte, totalSize - 1);
+
+        return { startByte, endByte: finalEndByte };
+    }
+
+    // 检查moov是否在前面
+    async function checkMoovPosition(videoUrl, totalBytes) {
+        // 获取文件开头和结尾来检查 moov 位置
+        const headResponse = await fetch(videoUrl, {
+            headers: { 'Range': 'bytes=0-128' }
+        });
+        const headBuffer = await headResponse.arrayBuffer();
+
+        const headView = new TextDecoder().decode(headBuffer);
+        if (headView.includes('moov')) {
+            return false; // moov 在开头
+        }
+
+        return true; // moov 可能在结尾
+    }
+
+    async function createPartialVideoWithHeader(videoUrl, startByte, endByte) {
+        // 确保moov盒位于文件开头
+        // ffmpeg -i input.mp4 -c copy -movflags +faststart output.mp4
+
+        // 1. 获取原始文件头
+        const headerResponse = await fetch(videoUrl, {
+            headers: { 'Range': `bytes=0-${249172}` } // 249172 是moov元数据估算字节大小  
+        });
+        const headerBuffer = await headerResponse.arrayBuffer();
+
+        // 2. 获取视频数据部分
+        const dataResponse = await fetch(videoUrl, {
+            headers: { 'Range': `bytes=${startByte}-${endByte}` }
+        });
+        const dataBuffer = await dataResponse.arrayBuffer();
+
+        // 3. 合并缓冲区
+        const combinedBuffer = new Uint8Array(headerBuffer.byteLength + dataBuffer.byteLength);
+        combinedBuffer.set(new Uint8Array(headerBuffer), 0);
+        combinedBuffer.set(new Uint8Array(dataBuffer), headerBuffer.byteLength);
+
+        return new Blob([combinedBuffer], { type: 'video/mp4' });
+    }
+
+    async function loadPartialVideo2() {
+        const metadata = await getVideoMetadata(videoUrl);
+        // const moovEnd = await checkMoovPosition(videoUrl,metadata.totalBytes);
+        // const response = await fetch(videoUrl, {
+        //     headers: { 'Range': `bytes=0-${(metadata.totalBytes-457)}` }  // metadata.totalBytes-458 就不行了，要落在关键帧上 而且元数据要完整（mp4结构一般是在开头或者结尾）
+        // });
+        // video.src = URL.createObjectURL(await response.blob());
+
+
+        const blob = await createPartialVideoWithHeader(videoUrl, 249173, 249172 * 3);
+        // const blob = await createPartialVideoWithHeader(videoUrl, 249172 * 6, metadata.totalBytes - 1);// 如果不从元数据开始合并，而是截取后面的，那么后面的会播放不了，结构被破坏了，即使852424是7.5秒关键帧位置
+        video.src = URL.createObjectURL(blob);
+    }
+    loadPartialVideo2();
+
+
+
+</script>
+
+
+</html>

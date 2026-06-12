@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简易SVG转图片工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            background: #f5f5f5;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .upload-area {
+            border: 2px dashed #4a90e2;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8fafc;
+        }
+        
+        .upload-area:hover {
+            background: #e8f4ff;
+            border-color: #357ae8;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #4a90e2;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .preview-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        canvas {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            max-width: 100%;
+            background: 
+                linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+                linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+                linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            min-width: 120px;
+        }
+        
+        .btn-primary {
+            background: #4a90e2;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #357ae8;
+        }
+        
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .file-info {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+        #currentSVGTextarea{
+            width:100%;
+            height:200px;
+            margin-top:10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>简易SVG转图片工具</h1>
+        
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <p>点击选择SVG文件或拖放文件到此处</p>
+            <p style="font-size: 12px; color: #888; margin-top: 5px;">支持.svg格式文件</p>
+            <input type="file" id="svgFileInput" class="file-input" accept=".svg,image/svg+xml">
+        </div>
+        
+        <div id="fileInfo" class="file-info" style="display: none;">
+            已选择: <span id="fileName"></span> (<span id="fileSize"></span>)
+        </div>
+
+        <div>
+            <textarea id="currentSVGTextarea" placeholder="SVG文本..." style="padding:10px;"></textarea>
+        </div>
+        
+        <div class="preview-container" style="height:500px;width:100%;display: flex;flex-direction: column;justify-content: center;align-items: center;" >
+            <div style="max-height: 100%;">
+                <canvas id="previewCanvas" width="1080" height="1080" style="width:100%;height:100%"></canvas>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="renderBtn" class="btn-primary" >渲染SVG</button>
+            <button id="savePngBtn" class="btn-primary" disabled>保存为PNG</button>
+            <button id="clearBtn" class="btn-secondary">清空画布和SVG</button>
+        </div>
+        
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const svgFileInput = document.getElementById('svgFileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const renderBtn = document.getElementById('renderBtn');
+        const savePngBtn = document.getElementById('savePngBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const statusDiv = document.getElementById('status');
+        const currentSVGTextarea=document.getElementById('currentSVGTextarea');
+        
+        // Canvas上下文
+        const ctx = previewCanvas.getContext('2d');
+        
+        // 当前加载的SVG内容
+        let currentSVG = null;
+        
+        // 初始化
+        function init() {
+            // 绑定事件
+            uploadArea.addEventListener('click', () => svgFileInput.click());
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('drop', handleDrop);
+            svgFileInput.addEventListener('change', handleFileSelect);
+            
+            renderBtn.addEventListener('click', renderSVG);
+            savePngBtn.addEventListener('click', saveAsPNG);
+            clearBtn.addEventListener('click', clearCanvas);
+            
+            // 清空画布
+            clearCanvas();
+        }
+        
+        // 处理拖放
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.style.background = '#e8f4ff';
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.style.background = '#f8fafc';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type === 'image/svg+xml' || file.name.endsWith('.svg')) {
+                    processFile(file);
+                } else {
+                    showStatus('请选择SVG格式文件', 'error');
+                }
+            }
+        }
+        
+        // 处理文件选择
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        }
+        
+        // 处理文件
+        function processFile(file) {
+            // 验证文件类型
+            if (!file.type.includes('svg') && !file.name.endsWith('.svg')) {
+                showStatus('请选择SVG格式文件', 'error');
+                return;
+            }
+            
+            // 显示文件信息
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.style.display = 'block';
+            
+            // 读取文件
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentSVG = e.target.result;
+                currentSVGTextarea.value=currentSVG;
+                
+                // 启用渲染按钮
+                renderBtn.disabled = false;
+                savePngBtn.disabled = true;
+
+                renderSVG()
+                
+                showStatus('SVG文件已加载，点击"渲染SVG"按钮显示', 'success');
+            };
+            
+            reader.onerror = function() {
+                showStatus('读取文件失败', 'error');
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        // 渲染SVG到Canvas
+        function renderSVG() {
+            currentSVG = currentSVGTextarea.value;
+            if (!currentSVG) {
+                showStatus('没有可渲染的SVG内容', 'error');
+                return;
+            }
+            
+            try {
+                // 清空画布（保持透明）
+                ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+                
+                // 创建图片对象
+                const img = new Image();
+                
+                // 将SVG转换为Data URL
+                const svgBlob = new Blob([currentSVG], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(svgBlob);
+                
+                img.onload = function() {
+                    // 获取SVG的原始尺寸
+                    const svgWidth = img.naturalWidth || 400;
+                    const svgHeight = img.naturalHeight || 400;
+                    
+                    // 计算缩放比例以适应Canvas
+                    const scale = Math.min(
+                        previewCanvas.width / svgWidth,
+                        previewCanvas.height / svgHeight
+                    );
+                    
+                    // 计算居中位置
+                    const scaledWidth = svgWidth * scale;
+                    const scaledHeight = svgHeight * scale;
+                    const x = (previewCanvas.width - scaledWidth) / 2;
+                    const y = (previewCanvas.height - scaledHeight) / 2;
+                    
+                    // 清空画布（确保透明）
+                    ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+                    
+                    // 绘制SVG
+                    ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+                    
+                    // 释放URL
+                    URL.revokeObjectURL(url);
+                    
+                    // 启用保存按钮
+                    savePngBtn.disabled = false;
+                    
+                    showStatus('SVG渲染成功！', 'success');
+                };
+                
+                img.onerror = function() {
+                    showStatus('SVG渲染失败', 'error');
+                    URL.revokeObjectURL(url);
+                };
+                
+                img.src = url;
+                
+            } catch (error) {
+                console.error('渲染失败:', error);
+                showStatus('渲染失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 保存为PNG
+        function saveAsPNG() {
+            try {
+                // 创建临时链接
+                const link = document.createElement('a');
+                
+                // 获取PNG格式的Data URL（透明背景）
+                const dataUrl = previewCanvas.toDataURL('image/png');
+                
+                // 设置下载属性
+                const timestamp = new Date().getTime();
+                link.download = `svg-image-${timestamp}.png`;
+                link.href = dataUrl;
+                
+                // 触发下载
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showStatus('图片已保存为PNG格式', 'success');
+                
+            } catch (error) {
+                console.error('保存失败:', error);
+                showStatus('保存失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 清空画布
+        function clearCanvas() {
+            // 完全清空画布，保持透明
+            ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+            
+            // 重置状态
+            currentSVG = null;
+            // renderBtn.disabled = true;
+            savePngBtn.disabled = true;
+            fileInfo.style.display = 'none';
+            svgFileInput.value = '';
+            currentSVGTextarea.value='';
+            
+            showStatus('画布已清空', 'success');
+        }
+        
+        // 显示状态消息
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + (type || '');
+            
+            // 3秒后清除状态
+            setTimeout(() => {
+                statusDiv.textContent = '';
+                statusDiv.className = 'status';
+            }, 3000);
+        }
+        
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

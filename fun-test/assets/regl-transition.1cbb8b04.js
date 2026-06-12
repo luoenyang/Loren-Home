@@ -1,0 +1,8 @@
+import{g as m}from"./gl-shader.d18e9054.js";var c=Object.assign||function(r){for(var t=1;t<arguments.length;t++){var n=arguments[t];for(var o in n)Object.prototype.hasOwnProperty.call(n,o)&&(r[o]=n[o])}return r},p=m;_(p);function _(r){return r&&r.__esModule?r:{default:r}}var g=`attribute vec2 _p;
+varying vec2 _uv;
+void main() {
+gl_Position = vec4(_p,0.0,1.0);
+_uv = vec2(0.5, 0.5) * (_p+vec2(1.0, 1.0));
+}`,d={cover:function(t){return".5+(uv-.5)*vec2(min(ratio/"+t+",1.),min("+t+"/ratio,1.))"},contain:function(t){return".5+(uv-.5)*vec2(max(ratio/"+t+",1.),max("+t+"/ratio,1.))"},stretch:function(){return"uv"}},h=function(t,n){var o=d[n];if(!o)throw new Error("invalid resizeMode="+n);return"precision highp float;varying vec2 _uv;uniform sampler2D from, to;uniform float progress, ratio, _fromR, _toR;vec4 getFromColor(vec2 uv){uv=vec2(1.,-1.)*uv+vec2(0.,1.);return texture2D(from,"+o("_fromR")+");}vec4 getToColor(vec2 uv){uv=vec2(1.,-1.)*uv+vec2(0.,1.);return texture2D(to,"+o("_toR")+`);}
+`+t+`
+void main(){gl_FragColor=transition(_uv);}`},R=function(r,t){var n=arguments.length>2&&arguments[2]!==void 0?arguments[2]:{},o=c({resizeMode:"cover"},n),f=o.resizeMode,v={};return Object.keys(t.paramsTypes).forEach(function(e){if(t.paramsTypes[e]==="sampler2D"){var a=void 0;v[e]=function(s,u){return e in u?u[e]:a||(a=r.texture({shape:[2,2]}))}}else{var i=t.defaultParams[e];v[e]=function(s,u){return e in u?u[e]:i}}}),r({frag:h(t.glsl,f),vert:g,attributes:{_p:r.buffer([[-1,-1],[-1,4],[4,-1]])},count:3,uniforms:c({},v,{ratio:function(a){return a.viewportWidth/a.viewportHeight},_fromR:function(a,i){return i.from.width/i.from.height},_toR:function(a,i){return i.to.width/i.to.height},from:r.prop("from"),to:r.prop("to"),progress:r.prop("progress")})})};export{R as l};

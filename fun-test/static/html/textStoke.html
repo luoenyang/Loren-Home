@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../js/jquery-3.5.1.min.js"></script>
+    <title>文字描边</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0px;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        p{
+            text-align: center;
+        }
+        .text {
+            paint-order:stroke;
+            position: relative;
+            color: white; /* 文字颜色 */
+            font-size: 24px; /* 字体大小 */
+        }
+
+        .stroked-text-pseudo::before {
+            content: attr(data-text); /* 使用 data-text 属性作为内容 */
+            position: absolute;
+            /* -webkit-text-stroke:8px blue; 描边 */
+            /* text-stroke: 8px blue; 标准属性 */
+            z-index: -1; /* 将描边放在文字下方 */
+        }
+
+    </style>
+</head>
+<body>
+    <p>标准描边：会占用文字大小；加上 paint-order:stroke;后就会向外，先绘制描边再绘制填充</p>
+    <div class="text normal" data-text="描边文字">描边文字</div>
+    <br/>
+
+    <p>伪元素描边</p>
+    <div class="text stroked-text-pseudo" data-text="描边文字">描边文字</div>
+    <br/>
+
+    <p>text-shadow 模拟描边</p>
+    <div class="text stroked-text-shadow" data-text="描边文字">描边文字</div>
+    <br/>
+
+    <p>svg描边</p>
+    <svg width="400" height="200" xmlns="http://www.w3.org/2000/svg">
+    <text x="150" y="50" font-size="24" fill="white" stroke="blue" stroke-width="2px" paint-order="stroke">
+        描边文字
+    </text>
+    </svg>
+
+
+
+    <script>
+        var textStrokeWidth=2;
+        var textStrokeColor="blue";
+
+
+        var sts=document.getElementsByClassName('stroked-text-shadow')[0];
+        var styleString="";
+        const len = 66;
+        for (let i = 0; i < len; i++) {
+            styleString += `0 0 `+textStrokeWidth+`px `+textStrokeColor+`` + (i == len - 1 ? "" : ",");
+        }
+        sts.style.textShadow = styleString;
+
+        var textStroke=textStrokeWidth+'px '+textStrokeColor;
+        $('.normal').css({
+            "-webkit-text-stroke":textStroke,
+            "text-stroke":textStroke
+        })
+
+
+        // 创建 <style> 标签
+        const style = $('<style>').text(`
+            .stroked-text-pseudo::before {
+                -webkit-text-stroke:`+textStroke+`;
+                text-stroke:`+textStroke+`
+            }
+        `);
+        // 将 <style> 标签插入到文档中
+        $('head').append(style);
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+   <head>
+   <meta charset="utf-8">
+   
+   <link rel="stylesheet" href="bootstrap.min.css">
+   <script src="jquery-2.1.4.min.js"></script>
+       
+   <!-- <link rel="stylesheet" href="prism.css">
+   <script src="prism.js"></script> -->
+
+   <link rel="stylesheet" href="SimpleCalculadorajQuery.css">
+   <script src="SimpleCalculadorajQuery.js"></script>
+   <style>
+    #idCalculadora{
+      width:500px;
+      margin:0 auto;
+    }
+    #idCalculadoratxtResultado{
+      text-shadow: none;
+      box-shadow: none; /* 去除阴影 */
+      border: none; /* 去除边框 */
+      outline: none; /* 去除聚焦时的外边框 */
+      white-space: pre-wrap !important; /* 保留空白符并允许换行  无效 */
+      word-break: keep-all !important; /* 防止单词或数字被截断  无效*/
+    }
+   </style>
+</head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div id="idCalculadora"></div>
+        <div id="CalcOptoins"></div>
+	   	</div>
+    </div>
+    
+    <script>
+         $("#idCalculadora").Calculadora({
+          EtiquetaBorrar:'清除',
+          TituloHTML:'',
+        });
+        // $("#CalcOptoins").Calculadora({
+        //     EtiquetaBorrar:'清除',
+        //     ClaseBtns1: 'warning', /* Color 数字*/
+        //     ClaseBtns2: 'success', /* Color 符号*/
+	      // 		 ClaseBtns3: 'primary', /* Color 等号*/
+        //     TituloHTML:'<h2>自定义样式</h2>',
+        //     Botones:["+","-","*","/","0","1","2","3","4","5","6","7","8","9",".","="]
+        // });
+
+
+        // 允许的字符集合: 数字 + - * / . 数字
+        const allowedChars = /^[0-9+\-*/.]+$/;
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+
+        // 防抖
+        function debounce(fn, delay) {
+          let debounceTimer;
+          return (...args) => {
+            if (debounceTimer) {
+              clearTimeout(debounceTimer);
+            }
+            debounceTimer = setTimeout(() => {
+              fn(...args);
+            }, delay);
+          };
+        }
+        let  checkData=debounce((t)=>{
+          let preValue = t.val();
+          let value = t.val();
+          // 检查每个字符是否在允许的字符集合中
+          value = value.split('').filter(char => allowedChars.test(char)).join('');
+          // 检查是否连续输入了相同的运算符
+          const operators = ['+', '-', '*', '/', '.'];
+          value = value.split('').filter((char, index, arr) => {
+              if (operators.includes(char)) {
+                  return index === 0 || !operators.includes(arr[index - 1]);
+              }
+              return true;
+          }).join('');
+
+          // 数字如果要换行，则数字要整体换行
+          // 使用正则表达式匹配数字
+          const numbers = value.match(/\d+\.\d+|\d+/g);
+          if (numbers) {
+            // 将数字替换为带有零宽空格的版本
+            numbers.forEach((num) => {
+              value = value.replace(num, `\u200B${num}\u200B`);
+            });
+          }
+          // 更新 textarea 的值
+          preValue!=value && t.val(value);
+        },10)
+        
+        let currentKey="";
+        $("#idCalculadoratxtResultado").on('keydown', function(event) {
+          if (!allowedKeys.includes(event.key)&&!allowedChars.test(event.key)) {
+              event.preventDefault(); // 阻止非法字符输入
+          }
+          currentKey=event.key;
+        });
+        $("#idCalculadoratxtResultado").on('input', function(event) {
+          currentKey!="Backspace"&& checkData($(this))
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas合成模式演示（视频和渐变背景颜色）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .video-container {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .video-title {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            height: 726px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #000;
+        }
+        
+        canvas, video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .controls {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+        }
+        
+        .control-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .control-title i {
+            margin-right: 10px;
+            font-size: 1.4rem;
+        }
+        
+        .blend-modes {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        
+        .blend-mode {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .blend-mode:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .blend-mode.active {
+            background: rgba(74, 144, 226, 0.7);
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
+        }
+        
+        .slider-container {
+            margin-bottom: 15px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4a90e2;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .info-panel {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .info-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-content {
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+        
+        .highlight {
+            color: #4a90e2;
+            font-weight: 600;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <p class="subtitle">探索Canvas合成模式在视频处理中的应用</p>
+        </header>
+        
+        <div class="content">
+            <div class="video-container">
+                <div class="video-title">原始视频</div>
+                <div class="video-wrapper">
+                    <video id="sourceVideo" controls muted>
+                        <!-- <source src="https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4"> -->
+                        <source src="/video/test.mp4" type="video/mp4">
+                        您的浏览器不支持视频播放
+                    </video>
+                </div>
+            </div>
+            
+            <div class="video-container">
+                <div class="video-title">视频和渐变背景合成效果预览<span style="font-size: 10px;">(非canvas filter滤镜，是具体的渐变颜色值)</span></div>
+                <div class="video-wrapper">
+                    <canvas id="outputCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <div class="control-title">
+                    <i>🎨</i> 合成模式选择
+                </div>
+                <div class="blend-modes">
+                    <button class="blend-mode active" data-mode="source-over">正常 (source-over)</button>
+                    <button class="blend-mode" data-mode="multiply">正片叠底 (multiply)</button>
+                    <button class="blend-mode" data-mode="screen">滤色 (screen)</button>
+                    <button class="blend-mode" data-mode="overlay">叠加 (overlay)</button>
+                    <button class="blend-mode" data-mode="darken">变暗 (darken)</button>
+                    <button class="blend-mode" data-mode="lighten">变亮 (lighten)</button>
+                    <button class="blend-mode" data-mode="color-dodge">颜色减淡 (color-dodge)</button>
+                    <button class="blend-mode" data-mode="color-burn">颜色加深 (color-burn)</button>
+                    <button class="blend-mode" data-mode="hard-light">强光 (hard-light)</button>
+                    <button class="blend-mode" data-mode="soft-light">柔光 (soft-light)</button>
+                    <button class="blend-mode" data-mode="difference">差值 (difference)</button>
+                    <button class="blend-mode" data-mode="exclusion">排除 (exclusion)</button>
+                    <button class="blend-mode" data-mode="hue">色相 (hue)</button>
+                    <button class="blend-mode" data-mode="saturation">饱和度 (saturation)</button>
+                    <button class="blend-mode" data-mode="color">颜色 (color)</button>
+                    <button class="blend-mode" data-mode="luminosity">亮度 (luminosity)</button>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <div class="control-title">
+                    <i>⚙️</i> 效果参数
+                </div>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>不透明度</span>
+                        <span id="opacityValue">100%</span>
+                    </div>
+                    <input type="range" min="0" max="100" value="100" class="slider" id="opacitySlider">
+                </div>
+            </div>
+        </div>
+        
+        
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const sourceVideo = document.getElementById('sourceVideo');
+        const outputCanvas = document.getElementById('outputCanvas');
+        const ctx = outputCanvas.getContext('2d');
+        const blendModeButtons = document.querySelectorAll('.blend-mode');
+        const opacitySlider = document.getElementById('opacitySlider');
+        const opacityValue = document.getElementById('opacityValue');
+        const currentModeElement = document.getElementById('currentMode');
+        
+        // 设置Canvas尺寸
+        function setCanvasSize() {
+            outputCanvas.width = outputCanvas.offsetWidth;
+            outputCanvas.height = outputCanvas.offsetHeight;
+        }
+        
+        // 初始化
+        setCanvasSize();
+        window.addEventListener('resize', setCanvasSize);
+        
+        // 当前合成模式
+        let currentBlendMode = 'source-over';
+        let opacity = 1.0;
+        
+        // 更新不透明度显示
+        opacitySlider.addEventListener('input', function() {
+            opacity = this.value / 100;
+            opacityValue.textContent = `${this.value}%`;
+        });
+        
+        // 处理合成模式按钮点击
+        blendModeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // 移除所有按钮的active类
+                blendModeButtons.forEach(btn => btn.classList.remove('active'));
+                // 为当前按钮添加active类
+                this.classList.add('active');
+                // 更新当前合成模式
+                currentBlendMode = this.getAttribute('data-mode');
+                if(currentModeElement){
+                  currentModeElement.textContent = currentBlendMode;
+                }
+            });
+        });
+        
+        // 绘制函数
+        function draw() {
+            if (sourceVideo.readyState === sourceVideo.HAVE_ENOUGH_DATA) {
+                // 清除Canvas
+                ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+                
+                // 绘制背景（这里使用简单的渐变作为背景）
+                const gradient = ctx.createLinearGradient(0, 0, outputCanvas.width, outputCanvas.height);
+                gradient.addColorStop(0, '#1a2a6c');
+                gradient.addColorStop(0.5, '#b21f1f');
+                gradient.addColorStop(1, '#fdbb2d');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
+                
+                // 设置合成模式
+                ctx.globalCompositeOperation = currentBlendMode;
+                ctx.globalAlpha = opacity;
+                
+                // 绘制视频帧
+                ctx.drawImage(sourceVideo, 0, 0, outputCanvas.width, outputCanvas.height);
+            }
+            
+            // 继续动画循环
+            requestAnimationFrame(draw);
+        }
+        
+        // 开始绘制循环
+        sourceVideo.addEventListener('play', draw);
+    </script>
+</body>
+</html>

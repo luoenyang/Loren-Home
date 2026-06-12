@@ -1,0 +1,156 @@
+
+function Get-MP4MoovInfo {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$VideoPath,
+        
+        [switch]$Detailed
+    )
+    
+    if (-not (Test-Path $VideoPath)) {
+        Write-Host "错误: 文件不存在: $VideoPath" -ForegroundColor Red
+        return $null
+    }
+    
+    # 检查是否安装了 ffprobe
+    $ffprobeCheck = Get-Command "ffprobe" -ErrorAction SilentlyContinue
+    if (-not $ffprobeCheck) {
+        Write-Host "错误: 未找到 ffprobe，请确保 FFmpeg 已安装并添加到 PATH" -ForegroundColor Red
+        return $null
+    }
+    
+    # 获取文件基本信息
+    $file_info = Get-Item $VideoPath
+    $file_size = $file_info.Length
+    
+    Write-Host "`n文件分析: $($file_info.Name)" -ForegroundColor Green
+    Write-Host "=" * 50 -ForegroundColor Green
+    
+    # 使用 ffprobe 获取流信息
+    Write-Host "正在分析视频数据..." -ForegroundColor Yellow
+    
+    $stream_info = ffprobe -v quiet -select_streams v -show_packets "$VideoPath" 2>$null
+    
+    $video_packets_size = 0
+    $packet_count = 0
+    
+    foreach ($line in $stream_info) {
+        if ($line -match "size=([0-9]+)") {
+            $video_packets_size += [long]$matches[1]
+            $packet_count++
+        }
+    }
+    
+    # 估算 moov 和其他元数据大小
+    $estimated_metadata_size = $file_size - $video_packets_size
+    $metadata_percentage = [math]::Round($estimated_metadata_size / $file_size * 100, 2)
+    
+    # 显示结果
+    Write-Host "文件总大小: $file_size 字节 ($([math]::Round($file_size/1MB, 2)) MB)" -ForegroundColor Cyan
+    Write-Host "视频数据包数量: $packet_count" -ForegroundColor White
+    Write-Host "视频流数据总大小: $video_packets_size 字节 ($([math]::Round($video_packets_size/1MB, 2)) MB)" -ForegroundColor White
+    Write-Host "估算的元数据大小 (包括 moov): $estimated_metadata_size 字节 ($([math]::Round($estimated_metadata_size/1KB, 2)) KB)" -ForegroundColor Yellow
+    Write-Host "元数据占比: $metadata_percentage%" -ForegroundColor Magenta
+    
+    if ($Detailed) {
+        Write-Host "`n详细信息:" -ForegroundColor Green
+        Write-Host "  - moov 原子通常包含:" -ForegroundColor Gray
+        Write-Host "    * 视频轨道信息 (trak)" -ForegroundColor Gray
+        Write-Host "    * 音频轨道信息" -ForegroundColor Gray
+        Write-Host "    * 编解码器参数" -ForegroundColor Gray
+        Write-Host "    * 时间戳信息" -ForegroundColor Gray
+        Write-Host "    * 关键帧索引" -ForegroundColor Gray
+    }
+
+    
+    
+    # 返回对象
+    return [PSCustomObject]@{
+        FileName           = $file_info.Name
+        TotalSize          = $file_size
+        VideoDataSize      = $video_packets_size
+        MetadataSize       = $estimated_metadata_size
+        MetadataPercentage = $metadata_percentage
+        PacketCount        = $packet_count
+    }
+}
+
+function Get-KeyframeCumulativeSize {
+    param(
+        [string]$VideoPath,
+        [double]$TargetSeconds
+    )
+    
+    $packets = @()
+    $current_packet = @{}
+    
+    # 获取所有packet信息
+    $result = ffprobe -loglevel quiet -select_streams v:0 -show_packets -read_intervals "0%$($TargetSeconds + 1)" -show_entries packet=size,pts_time,flags "$VideoPath" 2>$null
+    
+    foreach ($line in $result) {
+        if ($line -match "^(.*)=(.*)$") {
+            $key = $matches[1]
+            $value = $matches[2]
+            $current_packet[$key] = $value
+            
+            if ($key -eq "flags") {
+                $packets += $current_packet.Clone()
+                $current_packet = @{}
+            }
+        }
+    }
+    
+    # 计算累计大小并找到关键帧
+    $cumulative_size = 0
+    $last_keyframe = $null
+    
+    foreach ($packet in $packets) {
+        if ($packet.ContainsKey('pts_time') -and $packet.ContainsKey('size')) {
+            $packet_time = [double]$packet['pts_time']
+            
+            if ($packet_time -le $TargetSeconds) {
+                $packet_size = [int]$packet['size']
+                $cumulative_size += $packet_size
+                
+                # 检查是否为关键帧
+                if ($packet.ContainsKey('flags') -and $packet['flags'] -match "K") {
+                    $last_keyframe = @{
+                        Time = $packet_time
+                        Size = $packet_size
+                        CumulativeSize = $cumulative_size
+                    }
+                }
+            }
+        }
+    }
+
+    if ($last_keyframe) {
+        Write-Host "第$($TargetSeconds)秒之前最近的关键帧信息:" -ForegroundColor Green
+        Write-Host "  时间: $($last_keyframe.Time.ToString("F3")) 秒" -ForegroundColor Yellow
+        Write-Host "  该关键帧大小: $($last_keyframe.Size) 字节" -ForegroundColor Yellow
+        Write-Host "  累计到该关键帧的总字节数: $($last_keyframe.CumulativeSize) 字节" -ForegroundColor Yellow
+        Write-Host "  到第$($TargetSeconds)秒为止的总字节数: $($cumulative_size) 字节" -ForegroundColor Cyan
+    }else {
+        Write-Host "未找到关键帧" -ForegroundColor Red
+    }
+    
+    # return @{
+    #   Keyframe  = $last_keyframe
+    #    TotalSize = $cumulative_size
+    # }
+}
+
+
+
+
+
+
+# ================== 使用该文件 ==================
+
+# # 临时加载脚本（当前会话有效）
+# . "E:\path\to\VideoAnalysis.ps1"    . "E:\loren\my_project\my-vite-vue3-test\public\video\videoAnalysis.ps1"
+
+# # 使用函数 复制上面函数 粘贴到powerShell（如果不是.txt格式会格式化，粘贴后实际运行是有问题的）
+# Get-MP4MoovInfo -VideoPath "test_moovStart.mp4" -Detailed
+# Get-KeyframeCumulativeSize -VideoPath "test_moovStart.mp4" -TargetSeconds 8.0
+

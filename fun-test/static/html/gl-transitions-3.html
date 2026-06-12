@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>gl-transitions转场</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 20px;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+        }
+        canvas {
+            display: block;
+            overflow: hidden;
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+    <h3><a href="https://gl-transitions.com/gallery">gl-transitions 官网</a></h3>
+    <h2>关键代码和gl-transitions-1基本相同，对gl-transitions-2的视频位置和大小设置进行优化</h2>
+    <h2>使用了gl-transitions的转场效果，并且设置了视频位置和大小</h2>
+    <h3>使用转场并设置位置大小：gl_FragColor = transition(formColor,toColor,vTextureCoord);</h3>
+    <canvas id="glCanvas" width="270" height="480"></canvas> 
+    <input id="range" type="range" id="volume" min="0" max="1" value="0" step="0.01" style="width:270px;margin:10px 0;">
+    <input id="rangeValue" readonly/>
+    <div>
+        <button id="playButton">播放</button>
+        <button id="pauseButton">暂停</button>
+    </div>
+
+
+    <!-- <video id="myVideo" controls style="width:270px;">
+        <source src="../../video/test3.mp4" type="video/mp4">
+    </video>
+    <input id="rangeTest" type="range" id="volume" min="0" max="20" value="0" step="0.01" style="width:270px;margin:10px 0;">
+    <script>
+        const videoTest = document.getElementById('myVideo');
+        const rangeTest = document.getElementById('rangeTest');
+        rangeTest.addEventListener('input',function(e){
+            const v=Number(e.target.value);
+            videoTest.currentTime=v;
+        })
+    </script> -->
+    
+    <script>
+        const createVideo = src => {
+            return new Promise((resolve, reject) => {
+                const video = document.createElement('video');
+                video.src = src;
+                video.preload = 'auto';
+                video.muted = true;
+                video.loop = false;
+                video.crossOrigin = 'anonymous';
+                // video.oncanplaythrough = () => resolve(video);
+                video.onloadeddata = () => resolve(video);
+                video.onerror = reject;
+            });
+        };
+
+        const url1 = '../../video/test2.mp4';
+        const url2 = '../../video/test4.mp4';
+        function debounce(fn, delay) {
+            let debounceTimer;
+            return (...args) => {
+                if (debounceTimer) {
+                clearTimeout(debounceTimer);
+                }
+                debounceTimer = setTimeout(() => {
+                fn(...args);
+                }, delay);
+            };
+        }
+        Promise.all([createVideo(url1), createVideo(url2)]).then(videos => {
+            let currentTime=0;
+            let isPlaying=false;
+            const transitionDuration = 1; // 转场持续时间（秒）
+
+            const playButton = document.getElementById('playButton');
+            const pauseButton = document.getElementById('pauseButton');
+            const range = document.getElementById('range');
+            const rangeValue = document.getElementById('rangeValue');
+            range.setAttribute('max',videos[0].duration+videos[1].duration);
+
+            const delayStopTime=0.1;
+            const stopPreviewTransition=debounce(async ()=>{
+                isPlaying=false;                
+                !videos[0].paused?await videos[0].pause():"";
+                !videos[1].paused?await videos[1].pause():"";
+
+                currentTime-=delayStopTime;
+                range.value=currentTime;
+                rangeValue.value=currentTime;
+            },delayStopTime*1000);
+            const startPreviewTransition=debounce(async ()=>{
+                if(videos[0].currentTime<videos[0].duration&&videos[0].paused){
+                    await videos[0].play();
+                }
+                else if(videos[0].currentTime>= videos[0].duration&&videos[1].paused){
+                    await videos[1].play();
+                }
+                doTransitions();
+
+                stopPreviewTransition();
+            },100);
+            range.addEventListener('input',async function(e){
+                let v=Number(e.target.value);
+                currentTime=v;
+                isPlaying=false;
+
+                let t1=Number(currentTime>videos[0].duration?videos[0].duration:currentTime);
+                let t2=Math.max(0,Number(currentTime-videos[0].duration));
+                videos[0].currentTime=t1;
+                videos[1].currentTime=t2;
+
+                // 等待视频帧就绪
+                await new Promise(resolve => {
+                videos[0].onseeked = resolve;
+                });
+                await new Promise(resolve => {
+                videos[1].onseeked = resolve;
+                });
+
+                startPreviewTransition();
+            })
+            pauseButton.addEventListener('click',function(){
+                isPlaying=false;
+                videos.forEach(video => {
+                    video.pause();
+                });
+            })
+            playButton.addEventListener('click',function(){
+                isPlaying=true;
+                videos.forEach(video => {
+                    video.pause();
+                    if(videos[1].currentTime>=videos[1].duration){
+                        videos[0].currentTime=0;
+                        videos[1].currentTime=0;
+                    }
+                });
+                range.value=currentTime;
+
+                // 播放视频
+                if(videos[0].currentTime<videos[0].duration){
+                    videos[0].play();
+                }
+                else if(videos[0].currentTime>= videos[0].duration){
+                    videos[1].play();
+                }
+
+                doTransitions();
+            });
+            function doTransitions(){
+
+                // 动画循环
+                let progress = 0;
+                const animate = () => {
+                    currentTime=videos[0].currentTime+videos[1].currentTime;
+                    rangeValue.value=currentTime;
+
+                    
+                    // 在第一个视频结束前1秒开始转场
+                    // if (videos[0].currentTime >= videos[0].duration - transitionDuration/2) {
+                    if (currentTime >= videos[0].duration - transitionDuration/2) {
+                        // progress = Math.min(1, progress + 0.01);
+                        progress = Math.min(1, (currentTime-(videos[0].duration-transitionDuration/2))/transitionDuration);
+                    }
+                    // 更新纹理
+                    updateTexture(videos[0], textures[0]);
+                    updateTexture(videos[1], textures[1]);
+
+                    // 清除
+                    gl.clear(gl.COLOR_BUFFER_BIT);
+                    // 渲染
+                    console.log('正在渲染',progress)
+                    render(progress);
+
+                    
+                   
+                    if(isPlaying){ range.value=currentTime;}
+                    if(videos[1].currentTime>= videos[1].duration||!isPlaying){
+                        // 第二个视频播放完毕
+                        return;
+                    }
+                    if(videos[0].currentTime>= videos[0].duration-0.5&&isPlaying){
+                        // 第一个视频播放完再播放第二个
+                        // -0.5是为了优化第二个视频播放时的卡顿现象
+                        videos[1].play();
+                    }
+                    
+                    console.log('继续监听...');
+                    requestAnimationFrame(animate);
+
+                };
+
+                animate();
+            }
+
+
+            // 转场的处理 start****************
+            const canvas = document.getElementById('glCanvas');
+            const gl = canvas.getContext('webgl');
+            if (!gl) {
+                alert('WebGL not supported');
+                return;
+            }
+
+            // 顶点着色器
+            const vertexShaderSource = `
+                attribute vec4 aVertexPosition;
+                attribute vec2 aTextureCoord;
+                varying highp vec2 vTextureCoord;
+                void main(void) {
+                    gl_Position = aVertexPosition;
+                    vTextureCoord = aTextureCoord;
+                }
+            `;
+
+            // 片段着色器
+            const fragmentShaderSource = `
+                precision highp float;
+                varying vec2 vTextureCoord;
+                uniform sampler2D uSampler;
+                uniform sampler2D uSampler2;
+                uniform float uProgress;
+                uniform vec2 uCanvasSize;
+                uniform vec2 uDirection;
+                
+
+                vec4 getFromColor(vec2 uv) {
+                    return texture2D(uSampler, uv);
+                }
+
+                vec4 getToColor(vec2 uv) {
+                    return texture2D(uSampler2, uv);
+                }
+
+
+                uniform float count; // = 10.0
+                uniform float smoothness; // = 0.5
+                vec4 transition (vec4 fcolor,vec4 tcolor,vec2 p) {
+                    float pr = smoothstep(-smoothness, 0.0, p.x - uProgress * (1.0 + smoothness));
+                    float s = step(pr, fract(count * p.x));
+
+                    // gl-transitions 原来本身
+                    // return mix(getFromColor(p), getToColor(p), s);
+                    
+                    // 使用传入的位置和大小
+                    return mix(fcolor, tcolor, s);
+                }
+
+
+                void main() {
+                    vec2 fragCoord = vTextureCoord * uCanvasSize;
+                    vec2 video1Pos = vec2(0.0, 0.0);
+                    vec2 video1Size = vec2(135.0, 240.0);
+                    vec2 video2Pos = vec2(30.0, 20.0);
+                    vec2 video2Size = vec2(270.0, 480.0);
+
+                    vec2 coord1 = (fragCoord - video1Pos) / video1Size;
+                    vec2 coord2 = (fragCoord - video2Pos) / video2Size;
+
+                    vec4 fromColor = vec4(0.0);
+                    vec4 toColor = vec4(0.0);
+
+                    if (all(greaterThanEqual(fragCoord, video1Pos)) && 
+                        all(lessThan(fragCoord, video1Pos + video1Size))) {
+                        fromColor = getFromColor(coord1);
+                    }
+
+                    if (all(greaterThanEqual(fragCoord, video2Pos)) && 
+                        all(lessThan(fragCoord, video2Pos + video2Size))) {
+                        toColor = getToColor(coord2);
+                    }
+
+                    // 原生转场：
+                    // gl_FragColor = mix(toColor, toColor, uProgress);    
+                    
+                    // 使用gl-transitions的转场，并传入位置和大小
+                    // gl_FragColor = transition(vTextureCoord);
+                    gl_FragColor = transition(fromColor,toColor,vTextureCoord);
+                }
+            `;
+
+            // 编译着色器
+            const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertexShader, vertexShaderSource);
+            gl.compileShader(vertexShader);
+
+            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragmentShader, fragmentShaderSource);
+            gl.compileShader(fragmentShader);
+
+            // 创建程序
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                alert('Unable to initialize the shader program.');
+                return;
+            }
+
+            gl.useProgram(program);
+
+            // 设置顶点数据（全屏）
+            const positions = new Float32Array([
+                -1,  1,
+                -1, -1,
+                 1,  1,
+                 1, -1
+            ]);
+
+            const textureCoords = new Float32Array([
+                0.0, 0.0,
+                0.0, 1.0,
+                1.0, 0.0,
+                1.0, 1.0
+            ]);
+
+            // 初始化缓冲区
+            const initBuffer = (data) => {
+                const buffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+                gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+                return buffer;
+            };
+
+            const positionBuffer = initBuffer(positions);
+            const texCoordBuffer = initBuffer(textureCoords);
+
+            // 设置属性指针
+            const aVertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
+            const aTextureCoord = gl.getAttribLocation(program, 'aTextureCoord');
+            
+            gl.enableVertexAttribArray(aVertexPosition);
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.vertexAttribPointer(aVertexPosition, 2, gl.FLOAT, false, 0, 0);
+
+            gl.enableVertexAttribArray(aTextureCoord);
+            gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+            gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
+
+            // 创建纹理
+            const textures = [gl.createTexture(), gl.createTexture()];
+            textures.forEach((tex, i) => {
+                gl.bindTexture(gl.TEXTURE_2D, tex);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            });
+
+            // 获取uniform位置
+            const uSampler = gl.getUniformLocation(program, 'uSampler');
+            const uSampler2 = gl.getUniformLocation(program, 'uSampler2');
+            const uProgress = gl.getUniformLocation(program, 'uProgress');
+            const count = gl.getUniformLocation(program, 'count');
+            const smoothness = gl.getUniformLocation(program, 'smoothness');
+            const uCanvasSize = gl.getUniformLocation(program, 'uCanvasSize');
+
+            // 设置画布尺寸
+            gl.uniform2f(uCanvasSize, canvas.width, canvas.height);
+
+            // 更新纹理函数
+            const updateTexture = (video, texture) => {
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+            };
+
+            // 绘制函数
+            const render = (progress) => {
+                // 更新参数和进度
+                gl.uniform1f(count, 10.0);
+                gl.uniform1f(smoothness, 0.5);
+                gl.uniform1f(uProgress, progress);
+             
+                
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, textures[0]);
+                gl.uniform1i(uSampler, 0);
+
+                gl.activeTexture(gl.TEXTURE1);
+                gl.bindTexture(gl.TEXTURE_2D, textures[1]);
+                gl.uniform1i(uSampler2, 1);
+
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            };
+
+
+
+            // *********** 以下已移到上面的事件中进行触发 ***********
+            // 播放视频
+            // videos.forEach(video => video.play());
+
+            // 动画循环
+            // let progress = 0;
+            // const animate = () => {
+            //     requestAnimationFrame(animate);
+
+            //     // 在第一个视频结束前3秒开始转场
+            //     if (videos[0].currentTime >= videos[0].duration - 3) {
+            //         progress = Math.min(1, progress + 0.01);
+            //     }
+
+            //     // 更新纹理
+            //     updateTexture(videos[0], textures[0]);
+            //     updateTexture(videos[1], textures[1]);
+
+            //     // 渲染
+            //     gl.clear(gl.COLOR_BUFFER_BIT);
+            //     render(progress);
+            // };
+
+            // animate();
+        });
+    </script>
+</body>
+</html>
